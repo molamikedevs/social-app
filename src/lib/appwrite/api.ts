@@ -88,6 +88,18 @@ export async function signInAccount(user: { email: string; password: string }) {
 	}
 }
 
+//signOutAccount
+export async function signOutAccount() {
+	try {
+		await account.deleteSession('current')
+
+		return true
+	} catch (error) {
+		console.log(error)
+		throw new Error('Failed to sign out')
+	}
+}
+
 //getCurrentUser
 export async function getCurrentUser() {
 	try {

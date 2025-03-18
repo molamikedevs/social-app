@@ -1,7 +1,9 @@
 import { z } from 'zod'
-import { useForm } from 'react-hook-form';
+import { useForm } from 'react-hook-form'
+import { Link, useNavigate } from 'react-router-dom'
+import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  Form,
+	Form,
 	FormControl,
 	FormField,
 	FormItem,
@@ -9,59 +11,56 @@ import {
 	FormMessage,
 } from '../../components/ui/form'
 import { Button } from '../../components/ui/button'
-import { toast } from "sonner"
+import { toast } from 'sonner'
 import { Input } from '../../components/ui/input'
 import Loader from '../../components/shared/Loader'
-import { Link, useNavigate } from 'react-router-dom'
-import { useCreateUserAccount, useSignInAccount } from '../../lib/react-query/queriesAndMutation'
+import {
+	useCreateUserAccount,
+	useSignInAccount,
+} from '../../lib/react-query/queriesAndMutation'
 import { useUserContext } from '../../context/AuthContext'
-import { signupValidation } from '../../lib/validation';
-import { zodResolver } from '@hookform/resolvers/zod';
-
-
+import { signupValidation } from '../../lib/validation'
 
 const SignupForm = () => {
+	const navigate = useNavigate()
+	const { checkAuthUser } = useUserContext()
+	const { mutateAsync: signInAccount } = useSignInAccount()
+	const { mutateAsync: createUserAccount, isLoading: isCreatingUser } =
+		useCreateUserAccount()
 
-  const {mutateAsync: createUserAccount, isLoading: isCreatingUser} = useCreateUserAccount();
-  const {mutateAsync: signInAccount, isLoading: isSigningIn} = useSignInAccount();
-  const {checkAuthUser, isLoading: isUserLoading} = useUserContext()
-
-  const navigate = useNavigate()
-
-  const form = useForm<z.infer<typeof signupValidation>>({
-      resolver: zodResolver(signupValidation), // Apply Zod validation schema
-      defaultValues: {
-          name: '', // Default empty value for the name field
-          username: '', // Default empty value for the username field
-          email: '', // Default empty value for the email field
-          password: '', // Default empty value for the password field
-      },
-  });
+	const form = useForm<z.infer<typeof signupValidation>>({
+		resolver: zodResolver(signupValidation), // Apply Zod validation schema
+		defaultValues: {
+			name: '', // Default empty value for the name field
+			username: '', // Default empty value for the username field
+			email: '', // Default empty value for the email field
+			password: '', // Default empty value for the password field
+		},
+	})
 
 	//Submit handler.
 	const onSubmit = async (values: z.infer<typeof signupValidation>) => {
-    const newUser = await createUserAccount(values)
-		if(!newUser){
-      toast.error('Sign up failed. Please try again.')
-    }
+		const newUser = await createUserAccount(values)
+		if (!newUser) {
+			toast.error('Sign up failed. Please try again.')
+		}
 
-    const session = await signInAccount({
-      email: values.email,
-      password: values.password
-    });
+		const session = await signInAccount({
+			email: values.email,
+			password: values.password,
+		})
 
-    if(!session){
-      toast.error('Sign in failed. Please try again.')
-    }
+		if (!session) {
+			toast.error('Sign in failed. Please try again.')
+		}
 
-    const isLoggedIn = await checkAuthUser();
-    if(isLoggedIn){
-      form.reset()
-      navigate('/')
-    } else {
-      toast.error('Sign in failed. Please try again.')
-    }
-
+		const isLoggedIn = await checkAuthUser()
+		if (isLoggedIn) {
+			form.reset()
+			navigate('/')
+		} else {
+			toast.error('Sign in failed. Please try again.')
+		}
 	}
 
 	return (
