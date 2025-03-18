@@ -23,7 +23,7 @@ export const client = new Client()
     .setProject(appwriteConfig.projectId); // Set the project ID
 
 // Log the configuration to ensure environment variables are loaded correctly
-console.log(appwriteConfig);
+
 
 /**
  * Instance of the Account service to handle user authentication.
