@@ -76,49 +76,48 @@ export const saveUserToDB = async (user: {
 	}
 }
 
-//signInAccount
+// Function to sign in a user with email and password
 export async function signInAccount(user: { email: string; password: string }) {
 	try {
-		const session = await account.createEmailSession(user.email, user.password)
-
-		return session
+		// Attempt to create a session using the provided email and password
+		const session = await account.createEmailSession(user.email, user.password);
+		return session;
 	} catch (error) {
-		console.log(error)
-		throw new Error('Failed to sign in')
+		console.log(error);
+		throw new Error('Failed to sign in');
 	}
 }
 
-//signOutAccount
+// Function to sign out the current user
 export async function signOutAccount() {
 	try {
-		await account.deleteSession('current')
-
-		return true
+		// Delete the current user session
+		await account.deleteSession('current');
+		return true;
 	} catch (error) {
-		console.log(error)
-		throw new Error('Failed to sign out')
+		console.log(error);
+		throw new Error('Failed to sign out');
 	}
 }
 
-//getCurrentUser
+// Function to retrieve the currently logged-in user
 export async function getCurrentUser() {
 	try {
-		const currentAccount = await account.get()
+		// Fetch the currently authenticated account
+		const currentAccount = await account.get();
+		if (!currentAccount) throw new Error('No account found');
 
-		if(!currentAccount) throw new Error('No account found')
-
+		// Retrieve user details from the database based on account ID
 		const currentUser = await databases.listDocuments(
 			appwriteConfig.databaseId,
 			appwriteConfig.userCollectionId,
 			[Query.equal('accountId', currentAccount.$id)]
-		)
+		);
 
-		if(!currentUser) throw new Error('No user found')
-
-		return currentUser.documents[0]
-		
+		if (!currentUser) throw new Error('No user found');
+		return currentUser.documents[0];
 	} catch (error) {
-		console.log(error)
-		throw new Error('Failed to get current user')
+		console.log(error);
+		throw new Error('Failed to get current user');
 	}
 }

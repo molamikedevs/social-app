@@ -218,14 +218,14 @@
 	}
 
 	/* Left sidebar */
-	.leftsidebar {
+	.leftSide-bar {
 		@apply hidden md:flex px-6 py-10 flex-col justify-between min-w-[270px] bg-dark-2;
 	}
 
-	.leftsidebar-link {
+	.leftSide-bar-link {
 		@apply rounded-lg base-medium hover:bg-primary-500 transition;
 	}
-
+	
 	/* Post Card */
 	.post-card {
 		@apply bg-dark-2 rounded-3xl border border-dark-4 p-5 lg:p-7 w-full max-w-screen-sm;
