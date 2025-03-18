@@ -22,3 +22,19 @@ export const signupValidation = z.object({
         message: 'Password must be at least 8 characters.' 
     }),
 });
+
+/**
+ * Defines the validation rules for the signin form using Zod.
+ * 
+ * - `email` must be a valid email address.
+ * - `password` must be at least 8 characters long.
+ */
+
+export const signinValidation = z.object({
+    email: z.string().email({ 
+        message: 'Please enter a valid email address.' 
+    }),
+    password: z.string().min(8, { 
+        message: 'Password must be at least 8 characters.' 
+    }),
+});

@@ -88,9 +88,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     useEffect(() => {
         const cookieFallback = localStorage.getItem('cookieFallback');
 
-        if (cookieFallback === '[]') {
-            navigate('/sign-in'); // Redirect to sign-in if authentication cookies are missing
-        }
+        if (cookieFallback === '[]' || cookieFallback === null) {
+					navigate('/sign-in') // Redirect to sign-in if authentication cookies are missing
+				}
 
         checkAuthUser(); // Verify user authentication status
     }, []);
