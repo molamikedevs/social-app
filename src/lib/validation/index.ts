@@ -47,3 +47,12 @@ export const postValidation = z.object({
         location: z.string().min(2).max(100), 
         tags: z.string().min(2,).max(100),
 });
+
+/// Defines the validation rules for the update profile form using Zod.
+export const ProfileValidation = z.object({
+    file: z.custom<File[]>(),
+    name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    username: z.string().min(2, { message: "Name must be at least 2 characters." }),
+    email: z.string().email(),
+    bio: z.string(),
+  });

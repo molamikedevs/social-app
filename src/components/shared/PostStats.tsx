@@ -16,7 +16,7 @@ type PostStatsProps = {
 
 const PostStats = ({ post, userId }: PostStatsProps) => {
 	const location = useLocation()
-	const likesList = post.likes.map((user: Models.Document) => user.$id)
+	const likesList = post.likes?.map((user: Models.Document) => user.$id) || []
 
 	const [likes, setLikes] = useState<string[]>(likesList)
 	const [isSaved, setIsSaved] = useState(false)
@@ -25,14 +25,18 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 	const { mutate: savePost } = useSavePost()
 	const { mutate: deleteSavePost } = useDeleteSavedPost()
 
-	const { data: currentUser } = useGetCurrentUser()
+	const { data: currentUser, isLoading } = useGetCurrentUser()
 
-	const savedPostRecord = currentUser?.save.find(
-		(record: Models.Document) => record.post.$id === post.$id
-	)
+	// Prevent accessing properties if currentUser is null or undefined
+	const savedPostRecord =
+		currentUser?.save?.find(
+			(record: Models.Document) => record?.post?.$id === post.$id
+		) || null
 
 	useEffect(() => {
-		setIsSaved(!!savedPostRecord)
+		if (currentUser) {
+			setIsSaved(!!savedPostRecord)
+		}
 	}, [currentUser])
 
 	const handleLikePost = (
@@ -49,7 +53,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 		}
 
 		setLikes(likesArray)
-		likePost({ postId: post.$id, likesArray })
+		likePost({ postId: post.$id || '', likesArray })
 	}
 
 	const handleSavePost = (
@@ -62,13 +66,15 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 			return deleteSavePost(savedPostRecord.$id)
 		}
 
-		savePost({ userId: userId, postId: post.$id })
+		savePost({ userId: userId, postId: post.$id || '' })
 		setIsSaved(true)
 	}
 
 	const containerStyles = location.pathname.startsWith('/profile')
 		? 'w-full'
 		: ''
+
+	if (isLoading) return null // Prevent errors while data is loading
 
 	return (
 		<div
@@ -83,7 +89,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 					alt="like"
 					width={20}
 					height={20}
-					onClick={e => handleLikePost(e)}
+					onClick={handleLikePost}
 					className="cursor-pointer"
 				/>
 				<p className="small-medium lg:base-medium">{likes.length}</p>
@@ -92,11 +98,11 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 			<div className="flex gap-2">
 				<img
 					src={isSaved ? '/assets/icons/saved.svg' : '/assets/icons/save.svg'}
-					alt="share"
+					alt="save"
 					width={20}
 					height={20}
 					className="cursor-pointer"
-					onClick={e => handleSavePost(e)}
+					onClick={handleSavePost}
 				/>
 			</div>
 		</div>

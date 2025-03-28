@@ -1,6 +1,6 @@
 import { ID, Query } from 'appwrite'
 import { appwriteConfig, account, databases, storage, avatars } from './config'
-import { INewPost, INewUser, IUpdatePost } from '../../types'
+import { INewPost, INewUser, IUpdatePost, IUpdateUser } from '../../types'
 /**
  * Creates a new user account in Appwrite authentication and saves user details in the database.
  * @param {INewUser} user - Object containing user details (email, password, name, and optional username).
@@ -354,7 +354,6 @@ export async function savePost(userId: string, postId: string) {
 }
 
 // ============================== DELETE POST
-
 export async function deleteSavedPost(savedRecordId: string) {
 	try {
 		const statusCode = await databases.deleteDocument(
@@ -371,9 +370,15 @@ export async function deleteSavedPost(savedRecordId: string) {
 	}
 }
 
-// ============================== GET POST BY ID
+//============================== GET POST BY ID
 export async function getPostById(postId?: string) {
-	if (!postId) throw Error
+	if (!postId) throw new Error('Post ID is required')
+
+	// Validate the postId
+	const isValidId = /^[a-zA-Z0-9][a-zA-Z0-9_]{0,35}$/.test(postId)
+	if (!isValidId) {
+		throw new Error('Invalid Post ID')
+	}
 
 	try {
 		const post = await databases.getDocument(
@@ -382,9 +387,205 @@ export async function getPostById(postId?: string) {
 			postId
 		)
 
-		if (!post) throw Error
+		if (!post) throw new Error('Post not found')
 
 		return post
+	} catch (error) {
+		console.log(error)
+		throw error // Re-throw the error to be handled by the query
+	}
+}
+
+// ============================== GET INFINITE POST
+export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
+	const queries: any[] = [Query.orderDesc('$updatedAt'), Query.limit(9)]
+
+	if (pageParam) {
+		queries.push(Query.cursorAfter(pageParam.toString()))
+	}
+
+	try {
+		const posts = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.postCollectionId,
+			queries
+		)
+
+		if (!posts) throw Error
+
+		return posts
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+// ============================== GET SEARCH POSTS
+export async function getSearchPosts(searchTerm: string) {
+	try {
+		const posts = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.postCollectionId,
+			[Query.search('caption', searchTerm)]
+		)
+
+		if (!posts) throw Error
+
+		return posts
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+// ============================== GET SAVED POSTS
+export async function getSavedPosts(userId: string) {
+	try {
+		const savedPosts = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.savesCollectionId,
+			[Query.equal('user', userId)]
+		)
+
+		if (!savedPosts) throw Error
+
+		return savedPosts
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+// ============================== GET USER BY ID
+export async function getUserById(userId: string) {
+	try {
+		const user = await databases.getDocument(
+			appwriteConfig.databaseId,
+			appwriteConfig.userCollectionId,
+			userId
+		)
+
+		if (!user) throw Error
+
+		return user
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+export async function getUsers(limit?: number) {
+	const queries: any[] = [Query.orderDesc('$createdAt')]
+
+	if (limit) {
+		queries.push(Query.limit(limit))
+	}
+
+	try {
+		const users = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.userCollectionId,
+			queries
+		)
+
+		if (!users) throw Error
+
+		return users
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+export const removeSavedPosts = async (postId: string) => {
+	try {
+		// Fetch all users who saved this post
+		const usersWithSavedPost = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.userCollectionId,
+			[Query.search('save', postId)] // Find users who saved this post
+		)
+
+		// Loop through users and remove the deleted post from their saved list
+		for (const user of usersWithSavedPost.documents) {
+			const updatedSavedList = user.save.filter(
+				(savedPost: any) => savedPost !== postId
+			)
+
+			// Update the user's saved list
+			await databases.updateDocument(
+				appwriteConfig.databaseId,
+				appwriteConfig.userCollectionId,
+				user.$id,
+				{ save: updatedSavedList }
+			)
+		}
+	} catch (error) {
+		console.error('Failed to remove saved posts:', error)
+	}
+}
+
+// ============================== DELETE USER
+export const deleteUser = async (userId: string) => {
+	try {
+		const user = await account.deleteIdentity(userId)
+
+		if (!user) throw Error
+
+		return user
+	} catch (error) {
+		console.log(error)
+	}
+}
+
+// ============================== UPDATE USER
+export async function updateUser(user: IUpdateUser) {
+	const hasFileToUpdate = user.file.length > 0
+	try {
+		let image = {
+			imageUrl: user.imageUrl,
+			imageId: user.imageId,
+		}
+
+		if (hasFileToUpdate) {
+			// Upload new file to appwrite storage
+			const uploadedFile = await uploadFile(user.file[0])
+			if (!uploadedFile) throw Error
+
+			// Get new file url
+			const fileUrl = getFilePreview(uploadedFile.$id)
+			if (!fileUrl) {
+				await deleteFile(uploadedFile.$id)
+				throw Error
+			}
+
+			image = { ...image, imageUrl: fileUrl, imageId: uploadedFile.$id }
+		}
+
+		//  Update user
+		const updatedUser = await databases.updateDocument(
+			appwriteConfig.databaseId,
+			appwriteConfig.userCollectionId,
+			user.userId,
+			{
+				name: user.name,
+				bio: user.bio,
+				imageUrl: image.imageUrl,
+				imageId: image.imageId,
+			}
+		)
+
+		// Failed to update
+		if (!updatedUser) {
+			// Delete new file that has been recently uploaded
+			if (hasFileToUpdate) {
+				await deleteFile(image.imageId)
+			}
+			// If no new file uploaded, just throw error
+			throw Error
+		}
+
+		// Safely delete old file after successful update
+		if (user.imageId && hasFileToUpdate) {
+			await deleteFile(user.imageId)
+		}
+
+		return updatedUser
 	} catch (error) {
 		console.log(error)
 	}
