@@ -12,9 +12,9 @@ const SearchResults = ({searchPosts, isSearchFetching}: SearchResultProps) => {
 
     if(isSearchFetching) return <Loader />
 
-    if(searchPosts && searchPosts.documents.length > 0)  {
-        return  <GridPostList posts={searchPosts.documents}  />
-    }
+    if (searchPosts && searchPosts.length > 0) {
+			return <GridPostList posts={searchPosts} />
+		}
 
 
   return (
