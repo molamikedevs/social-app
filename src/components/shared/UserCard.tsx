@@ -1,13 +1,52 @@
+import { useUserContext } from '../../context/AuthContext'
 import { Models } from 'appwrite'
 import { Link } from 'react-router-dom'
-
 import { Button } from '../ui/button'
+import {
+	useFollowStatus,
+	useFollowUser,
+	useUnfollowUser,
+} from '../../lib/react-query/queriesAndMutation'
 
 type UserCardProps = {
 	user: Models.Document
 }
 
 const UserCard = ({ user }: UserCardProps) => {
+	const { user: currentUser } = useUserContext()
+	const { mutateAsync: followUser } = useFollowUser()
+	const { mutateAsync: unfollowUser } = useUnfollowUser()
+	const {
+		data: following,
+		isLoading,
+		refetch,
+	} = useFollowStatus(currentUser?.id, user.$id)
+
+	const handleFollowToggle = async (e: React.MouseEvent) => {
+		e.preventDefault() // Prevent Link navigation
+		e.stopPropagation() // Stop event bubbling
+
+		if (!currentUser?.id) return
+
+		try {
+			if (following) {
+				await unfollowUser({
+					followerId: currentUser.id,
+					followingId: user.$id,
+				})
+			} else {
+				await followUser({
+					followerId: currentUser.id,
+					followingId: user.$id,
+				})
+			}
+			// Manually refetch the follow status
+			await refetch()
+		} catch (error) {
+			console.error('Follow toggle error:', error)
+		}
+	}
+
 	return (
 		<Link to={`/profile/${user.$id}`} className="user-card">
 			<img
@@ -25,9 +64,16 @@ const UserCard = ({ user }: UserCardProps) => {
 				</p>
 			</div>
 
-			<Button type="button" size="sm" className="shad-button_primary px-5">
-				Follow
-			</Button>
+			{currentUser?.id !== user.$id && (
+				<Button
+					type="button"
+					size="sm"
+					className={`shad-button_primary px-5 ${isLoading ? 'opacity-50' : ''}`}
+					onClick={handleFollowToggle}
+					disabled={isLoading}>
+					{following ? 'Unfollow' : 'Follow'}
+				</Button>
+			)}
 		</Link>
 	)
 }

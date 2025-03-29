@@ -11,7 +11,18 @@ import {
 	useLocation,
 } from 'react-router-dom'
 import LikedPosts from './LikedPost'
+import FollowersList from '../../components/shared/FollowersList'
+import FollowingList from '../../components/shared/FollowingList'
 import { useGetUserById } from '../../lib/react-query/queriesAndMutation'
+import {
+	useGetFollowersCount,
+	useGetFollowingCount,
+} from '../../lib/react-query/queriesAndMutation'
+import {
+	useFollowStatus,
+	useFollowUser,
+	useUnfollowUser,
+} from '../../lib/react-query/queriesAndMutation'
 
 interface StabBlockProps {
 	value: string | number
@@ -31,6 +42,41 @@ const Profile = () => {
 	const { pathname } = useLocation()
 
 	const { data: currentUser } = useGetUserById(id || '')
+
+	// Follow functionality
+	const { mutateAsync: followUser, isLoading: isFollowing } = useFollowUser()
+	const { mutateAsync: unfollowUser, isLoading: isUnfollowing } =
+		useUnfollowUser()
+	const { data: isFollowingUser, isLoading: isFollowStatusLoading } =
+		useFollowStatus(user.id, currentUser?.$id || '')
+
+	// Follower/following counts
+	const { data: followersCount = 0 } = useGetFollowersCount(
+		currentUser?.$id || ''
+	)
+	const { data: followingCount = 0 } = useGetFollowingCount(
+		currentUser?.$id || ''
+	)
+
+	const handleFollowToggle = async () => {
+		if (!user?.id || !currentUser?.$id) return
+
+		try {
+			if (isFollowingUser) {
+				await unfollowUser({
+					followerId: user.id,
+					followingId: currentUser.$id,
+				})
+			} else {
+				await followUser({
+					followerId: user.id,
+					followingId: currentUser.$id,
+				})
+			}
+		} catch (error) {
+			console.error('Error toggling follow status:', error)
+		}
+	}
 
 	if (!currentUser)
 		return (
@@ -61,9 +107,15 @@ const Profile = () => {
 						</div>
 
 						<div className="flex gap-8 mt-10 items-center justify-center xl:justify-start flex-wrap z-20">
-							<StatBlock value={currentUser.posts.length} label="Posts" />
-							<StatBlock value={20} label="Followers" />
-							<StatBlock value={20} label="Following" />
+							<Link to={`/profile/${id}`}>
+								<StatBlock value={currentUser.posts.length} label="Posts" />
+							</Link>
+							<Link to={`/profile/${id}/followers`}>
+								<StatBlock value={followersCount} label="Followers" />
+							</Link>
+							<Link to={`/profile/${id}/following`}>
+								<StatBlock value={followingCount} label="Following" />
+							</Link>
 						</div>
 
 						<p className="small-medium md:base-medium text-center xl:text-left mt-7 max-w-screen-sm">
@@ -90,29 +142,80 @@ const Profile = () => {
 							</Link>
 						</div>
 						<div className={`${user.id === id && 'hidden'}`}>
-							<Button type="button" className="shad-button_primary px-8">
-								Follow
+							<Button
+								type="button"
+								className="shad-button_primary px-8"
+								onClick={handleFollowToggle}
+								disabled={
+									isFollowStatusLoading || isFollowing || isUnfollowing
+								}>
+								{isFollowingUser ? 'Unfollow' : 'Follow'}
 							</Button>
 						</div>
 					</div>
 				</div>
 			</div>
 
-			{currentUser.$id === user.id && (
-				<div className="flex max-w-5xl w-full">
-					<Link
-						to={`/profile/${id}`}
-						className={`profile-tab rounded-l-lg ${
-							pathname === `/profile/${id}` && '!bg-dark-3'
-						}`}>
-						<img
-							src={'/assets/icons/posts.svg'}
-							alt="posts"
-							width={20}
-							height={20}
+			<div className="flex max-w-5xl w-full">
+				<Link
+					to={`/profile/${id}`}
+					className={`profile-tab rounded-l-lg ${
+						pathname === `/profile/${id}` && '!bg-dark-3'
+					}`}>
+					<img
+						src={'/assets/icons/posts.svg'}
+						alt="posts"
+						width={20}
+						height={20}
+					/>
+					Posts
+				</Link>
+				<Link
+					to={`/profile/${id}/followers`}
+					className={`profile-tab ${
+						pathname === `/profile/${id}/followers` && '!bg-dark-3'
+					}`}>
+					<svg
+						className="w-6 h-6 text-primary-500 dark:text-white"
+						aria-hidden="true"
+						xmlns="http://www.w3.org/2000/svg"
+						width="30"
+						height="30"
+						fill="none"
+						viewBox="0 0 24 24">
+						<path
+							stroke="currentColor"
+							strokeLinecap="round"
+							strokeWidth="2"
+							d="M4.5 17H4a1 1 0 0 1-1-1 3 3 0 0 1 3-3h1m0-3.05A2.5 2.5 0 1 1 9 5.5M19.5 17h.5a1 1 0 0 0 1-1 3 3 0 0 0-3-3h-1m0-3.05a2.5 2.5 0 1 0-2-4.45m.5 13.5h-7a1 1 0 0 1-1-1 3 3 0 0 1 3-3h3a3 3 0 0 1 3 3 1 1 0 0 1-1 1Zm-1-9.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"
 						/>
-						Posts
-					</Link>
+					</svg>
+					Followers
+				</Link>
+				<Link
+					to={`/profile/${id}/following`}
+					className={`profile-tab ${
+						pathname === `/profile/${id}/following` && '!bg-dark-3'
+					}`}>
+					<svg
+						className="w-6 h-6 text-primary-500 dark:text-white"
+						aria-hidden="true"
+						xmlns="http://www.w3.org/2000/svg"
+						width="30"
+						height="30"
+						fill="none"
+						viewBox="0 0 24 24">
+						<path
+							stroke="currentColor"
+							strokeLinecap="round"
+							strokeLinejoin="round"
+							strokeWidth="2"
+							d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 0 4.951-1.488A3.987 3.987 0 0 0 13 16h-2a3.987 3.987 0 0 0-3.951 3.512A8.948 8.948 0 0 0 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+						/>
+					</svg>
+					Following
+				</Link>
+				{currentUser.$id === user.id && (
 					<Link
 						to={`/profile/${id}/liked-posts`}
 						className={`profile-tab rounded-r-lg ${
@@ -126,13 +229,21 @@ const Profile = () => {
 						/>
 						Liked Posts
 					</Link>
-				</div>
-			)}
+				)}
+			</div>
 
 			<Routes>
 				<Route
 					index
 					element={<GridPostList posts={currentUser.posts} showUser={false} />}
+				/>
+				<Route
+					path="/followers"
+					element={<FollowersList userId={currentUser.$id} />}
+				/>
+				<Route
+					path="/following"
+					element={<FollowingList userId={currentUser.$id} />}
 				/>
 				{currentUser.$id === user.id && (
 					<Route path="/liked-posts" element={<LikedPosts />} />

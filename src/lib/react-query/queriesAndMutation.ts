@@ -24,6 +24,13 @@ import {
 	getUserById,
 	getUsers,
 	updateUser,
+	followUser,
+	unfollowUser,
+	isFollowing,
+	getFollowingCount,
+	getFollowersCount,
+	getFollowingList,
+	getFollowersList,
 } from '../appwrite/api'
 
 //userCreateUserAccountMutation
@@ -231,5 +238,86 @@ export const useUpdateUser = () => {
 				queryKey: [QUERY_KEYS.GET_USER_BY_ID, data?.$id],
 			})
 		},
+	})
+}
+
+export const useFollowUser = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({
+			followerId,
+			followingId,
+		}: {
+			followerId: string
+			followingId: string
+		}) => {
+			return followUser(followerId, followingId)
+		},
+		onSuccess: (_, { followingId }) => {
+			queryClient.invalidateQueries(['isFollowing', followingId])
+		},
+	})
+}
+
+export const useUnfollowUser = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: async ({
+			followerId,
+			followingId,
+		}: {
+			followerId: string
+			followingId: string
+		}) => {
+			return unfollowUser(followerId, followingId)
+		},
+		onSuccess: (_, { followingId }) => {
+			queryClient.invalidateQueries(['isFollowing', followingId])
+		},
+	})
+}
+
+export const useFollowStatus = (followerId?: string, followingId?: string) => {
+	return useQuery({
+		queryKey: ['isFollowing', followingId],
+		queryFn: () => isFollowing(followerId!, followingId!),
+		enabled: !!followerId && !!followingId,
+	})
+}
+
+export const useGetFollowersCount = (userId: string) => {
+	return useQuery({
+		queryKey: ['getFollowersCount', userId],
+		queryFn: () => getFollowersCount(userId),
+		enabled: !!userId,
+	})
+}
+
+export const useGetFollowingCount = (userId: string) => {
+	return useQuery({
+		queryKey: ['getFollowingCount', userId],
+		queryFn: () => getFollowingCount(userId),
+		enabled: !!userId,
+	})
+}
+
+// In your queriesAndMutation.ts
+export const useGetFollowersList = (userId?: string) => {
+	return useQuery({
+		queryKey: ['followersList', userId],
+		queryFn: () => getFollowersList(userId!),
+		enabled: !!userId,
+		staleTime: 5 * 60 * 1000, // 5 minutes
+	})
+}
+
+export const useGetFollowingList = (userId?: string) => {
+	return useQuery({
+		queryKey: ['followingList', userId],
+		queryFn: () => getFollowingList(userId!),
+		enabled: !!userId,
+		staleTime: 5 * 60 * 1000, // 5 minutes
 	})
 }

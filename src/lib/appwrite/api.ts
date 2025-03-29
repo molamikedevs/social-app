@@ -633,3 +633,180 @@ export async function updateUser(user: IUpdateUser) {
 		console.log(error)
 	}
 }
+
+// ============================== FOLLOW USER
+
+export const followUser = async (followerId: string, followingId: string) => {
+	try {
+		const response = await databases.createDocument(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			ID.unique(),
+			{
+				followerId,
+				followingId,
+				createdAt: new Date().toISOString(),
+			}
+		)
+		return response
+	} catch (error) {
+		console.error('Follow Error:', error)
+		throw error
+	}
+}
+
+// Unfollow a user
+export const unfollowUser = async (followerId: string, followingId: string) => {
+	try {
+		const query = [
+			Query.equal('followerId', followerId),
+			Query.equal('followingId', followingId),
+		]
+		const followDocs = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			query
+		)
+
+		if (followDocs.documents.length > 0) {
+			await databases.deleteDocument(
+				appwriteConfig.databaseId,
+				appwriteConfig.followsCollectionId,
+				followDocs.documents[0].$id
+			)
+		}
+	} catch (error) {
+		console.error('Unfollow Error:', error)
+		throw error
+	}
+}
+
+// Check if a user is following another user
+export const isFollowing = async (followerId: string, followingId: string) => {
+	try {
+		const query = [
+			Query.equal('followerId', followerId),
+			Query.equal('followingId', followingId),
+		]
+		const followDocs = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			query
+		)
+		return followDocs.documents.length > 0
+	} catch (error) {
+		console.error('Check Follow Error:', error)
+		return false
+	}
+}
+
+// ============================== NOTIFY USER
+export const notifyUser = async (
+	userId: string,
+	senderId: string,
+	type: string,
+	postId?: string
+) => {
+	try {
+		await databases.createDocument(
+			'databaseId',
+			'notificationsCollectionId',
+			ID.unique(),
+			{ userId, senderId, type, postId: postId || '' }
+		)
+	} catch (error) {
+		console.error('Notification Error:', error)
+	}
+}
+
+export async function getFollowersCount(userId: string) {
+	try {
+		// Query all documents where the user is being followed (followingId = userId)
+		const response = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			[
+				Query.equal('followingId', userId),
+				Query.select(['$id']), // We only need the count, not the full documents
+			]
+		)
+
+		return response.total
+	} catch (error) {
+		console.error('Error getting followers count:', error)
+		return 0 // Return 0 if there's an error
+	}
+}
+
+export async function getFollowingCount(userId: string) {
+	try {
+		// Query all documents where the user is following others (followerId = userId)
+		const response = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			[
+				Query.equal('followerId', userId),
+				Query.select(['$id']), // We only need the count, not the full documents
+			]
+		)
+
+		return response.total
+	} catch (error) {
+		console.error('Error getting following count:', error)
+		return 0 // Return 0 if there's an error
+	}
+}
+
+export const getFollowersList = async (userId: string) => {
+	try {
+		const response = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			[Query.equal('followingId', userId)]
+		)
+
+		// Get user details for each follower
+		const followerUsers = await Promise.all(
+			response.documents.map(async doc => {
+				const user = await databases.getDocument(
+					appwriteConfig.databaseId,
+					appwriteConfig.userCollectionId,
+					doc.followerId
+				)
+				return user
+			})
+		)
+
+		return followerUsers
+	} catch (error) {
+		console.error('Error getting followers list:', error)
+		throw error
+	}
+}
+
+export const getFollowingList = async (userId: string) => {
+	try {
+		const response = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.followsCollectionId,
+			[Query.equal('followerId', userId)]
+		)
+
+		// Get user details for each followed user
+		const followingUsers = await Promise.all(
+			response.documents.map(async doc => {
+				const user = await databases.getDocument(
+					appwriteConfig.databaseId,
+					appwriteConfig.userCollectionId,
+					doc.followingId
+				)
+				return user
+			})
+		)
+
+		return followingUsers
+	} catch (error) {
+		console.error('Error getting following list:', error)
+		throw error
+	}
+}

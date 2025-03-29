@@ -55,3 +55,13 @@ export type INewUser = {
 	username: string
 	password: string
 }
+
+// types.ts (or your types file)
+export type NotificationType = 'follow' | 'like'
+
+export interface CreateNotificationParams {
+	userId: string
+	senderId: string
+	type: NotificationType
+	postId?: string
+}
