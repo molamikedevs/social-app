@@ -422,19 +422,62 @@ export async function getInfinitePosts({ pageParam }: { pageParam: number }) {
 // ============================== GET SEARCH POSTS
 export async function getSearchPosts(searchTerm: string) {
 	try {
-		const posts = await databases.listDocuments(
-			appwriteConfig.databaseId,
-			appwriteConfig.postCollectionId,
-			[Query.search('caption', searchTerm)]
-		)
+		const [captionResults, tagResults] = await Promise.all([
+			databases.listDocuments(
+				appwriteConfig.databaseId,
+				appwriteConfig.postCollectionId,
+				[Query.equal('caption', searchTerm)]
+			),
+			databases.listDocuments(
+				appwriteConfig.databaseId,
+				appwriteConfig.postCollectionId,
+				[Query.equal('tags', searchTerm)]
+			),
+		])
 
-		if (!posts) throw Error
+		// Merge results and remove duplicates
+		const uniqueDocuments = [
+			...new Map(
+				[...captionResults.documents, ...tagResults.documents].map(doc => [
+					doc.$id,
+					doc,
+				])
+			).values(),
+		]
 
-		return posts
+		return { documents: uniqueDocuments }
 	} catch (error) {
-		console.log(error)
+		console.log('Search Error:', error)
+		return { documents: [] }
 	}
 }
+
+// export async function getSearchPosts(searchTerm: string) {
+//     try {
+//         const [captionResults, tagResults] = await Promise.all([
+//             databases.listDocuments(
+//                 appwriteConfig.databaseId,
+//                 appwriteConfig.postCollectionId,
+//                 [Query.search('caption', searchTerm)]
+//             ),
+//             databases.listDocuments(
+//                 appwriteConfig.databaseId,
+//                 appwriteConfig.postCollectionId,
+//                 [Query.search('tags', searchTerm)]
+//             )
+//         ]);
+
+//         // Merge results and remove duplicates
+//         const uniqueDocuments = [
+//             ...new Map([...captionResults.documents, ...tagResults.documents].map(doc => [doc.$id, doc])).values()
+//         ];
+
+//         return { documents: uniqueDocuments };
+//     } catch (error) {
+//         console.log("Search Error:", error);
+//         return { documents: [] };
+//     }
+// }
 
 // ============================== GET SAVED POSTS
 export async function getSavedPosts(userId: string) {
