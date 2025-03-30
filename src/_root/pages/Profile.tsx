@@ -155,31 +155,33 @@ const Profile = () => {
 					</div>
 				</div>
 			</div>
-			<div className="flex flex-wrap sm:flex-row max-w-5xl w-full">
+			<div className="grid grid-cols-2 gap-2 w-full sm:hidden">
+				{/* Row 1 - Posts & Followers */}
 				<Link
 					to={`/profile/${id}`}
-					className={`profile-tab sm:rounded-l-lg ${
+					className={`profile-tab rounded-tl-lg ${
 						pathname === `/profile/${id}` && '!bg-dark-3'
 					}`}>
-					<div className="flex items-center">
+					<div className="flex items-center justify-center p-2">
 						<img
 							src={'/assets/icons/posts.svg'}
 							alt="posts"
-							width={20}
-							height={20}
-							className="mr-2"
+							width={16}
+							height={16}
+							className="mr-1.5"
 						/>
-						<span className="text-sm">Posts</span>
+						<span className="text-xs sm:text-sm">Posts</span>
 					</div>
 				</Link>
+
 				<Link
 					to={`/profile/${id}/followers`}
-					className={`profile-tab ${
+					className={`profile-tab rounded-tr-lg ${
 						pathname === `/profile/${id}/followers` && '!bg-dark-3'
 					}`}>
-					<div className="flex items-center">
+					<div className="flex items-center justify-center p-2">
 						<svg
-							className="w-5 h-5 text-primary-500 dark:text-white mr-2"
+							className="w-4 h-4 text-primary-500 mr-1.5"
 							aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
@@ -188,20 +190,21 @@ const Profile = () => {
 								stroke="currentColor"
 								strokeLinecap="round"
 								strokeWidth="2"
-								d="M4.5 17H4a1 1 0 0 1-1-1 3 3 0 0 1 3-3h1m0-3.05A2.5 2.5 0 1 1 9 5.5M19.5 17h.5a1 1 0 0 0 1-1 3 3 0 0 0-3-3h-1m0-3.05a2.5 2.5 0 1 0-2-4.45m.5 13.5h-7a1 1 0 0 1-1-1 3 3 0 0 1 3-3h3a3 3 0 0 1 3 3 1 1 0 0 1-1 1Zm-1-9.5a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0Z"
+								d="M4.5 17H4a1 1 0 01-1-1 3 3 0 013-3h1m0-3.05A2.5 2.5 0 119 5.5M19.5 17h.5a1 1 0 001-1 3 3 0 00-3-3h-1m0-3.05a2.5 2.5 0 10-2-4.45m.5 13.5h-7a1 1 0 01-1-1 3 3 0 013-3h3a3 3 0 013 3 1 1 0 01-1 1zm-1-9.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
 							/>
 						</svg>
-						<span className="text-sm">Followers</span>
+						<span className="text-xs sm:text-sm">Followers</span>
 					</div>
 				</Link>
+
 				<Link
 					to={`/profile/${id}/following`}
-					className={`profile-tab ${
+					className={`profile-tab rounded-bl-lg ${
 						pathname === `/profile/${id}/following` && '!bg-dark-3'
 					}`}>
-					<div className="flex items-center">
+					<div className="flex items-center justify-center p-2">
 						<svg
-							className="w-5 h-5 text-primary-500 dark:text-white mr-2"
+							className="w-4 h-4 text-primary-500 mr-1.5"
 							aria-hidden="true"
 							xmlns="http://www.w3.org/2000/svg"
 							fill="none"
@@ -211,30 +214,115 @@ const Profile = () => {
 								strokeLinecap="round"
 								strokeLinejoin="round"
 								strokeWidth="2"
-								d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0 0a8.949 8.949 0 0 0 4.951-1.488A3.987 3.987 0 0 0 13 16h-2a3.987 3.987 0 0 0-3.951 3.512A8.948 8.948 0 0 0 12 21Zm3-11a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+								d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0a8.949 8.949 0 004.951-1.488A3.987 3.987 0 0013 16h-2a3.987 3.987 0 00-3.951 3.512A8.948 8.948 0 0012 21zm3-11a3 3 0 11-6 0 3 3 0 016 0z"
 							/>
 						</svg>
-						<span className="text-sm">Following</span>
+						<span className="text-xs sm:text-sm">Following</span>
 					</div>
 				</Link>
+
 				{currentUser.$id === user.id && (
 					<Link
 						to={`/profile/${id}/liked-posts`}
-						className={`profile-tab sm:rounded-r-lg ${
+						className={`profile-tab rounded-br-lg ${
 							pathname === `/profile/${id}/liked-posts` && '!bg-dark-3'
 						}`}>
-						<div className="flex items-center">
+						<div className="flex items-center justify-center p-2">
 							<img
 								src={'/assets/icons/like.svg'}
 								alt="like"
-								width={20}
-								height={20}
-								className="mr-2"
+								width={16}
+								height={16}
+								className="mr-1.5"
 							/>
-							<span className="text-sm">Liked Posts</span>
+							<span className="text-xs sm:text-sm">Liked Posts</span>
 						</div>
 					</Link>
 				)}
+			</div>
+
+			{/* Desktop Version */}
+			<div className="hidden sm:flex flex-wrap max-w-5xl w-full">
+				<Link
+					to={`/profile/${id}`}
+					className={`profile-tab sm:rounded-l-lg ${
+						pathname === `/profile/${id}` && '!bg-dark-3'
+					}`}>
+					<div className="flex items-center">
+						<img
+							src={'/assets/icons/posts.svg'}
+							alt="posts"
+							width={18}
+							height={18}
+							className="mr-2"
+						/>
+						<span className="text-sm">Posts</span>
+					</div>
+				</Link>
+
+				<Link
+					to={`/profile/${id}/liked-posts`}
+					className={`profile-tab rounded-br-lg ${
+						pathname === `/profile/${id}/liked-posts` && '!bg-dark-3'
+					}`}>
+					<div className="flex items-center justify-center p-2">
+						<img
+							src={'/assets/icons/like.svg'}
+							alt="like"
+							width={16}
+							height={16}
+							className="mr-1.5"
+						/>
+						<span className="text-xs sm:text-sm">Liked Posts</span>
+					</div>
+				</Link>
+
+				<Link
+					to={`/profile/${id}/following`}
+					className={`profile-tab rounded-bl-lg ${
+						pathname === `/profile/${id}/following` && '!bg-dark-3'
+					}`}>
+					<div className="flex items-center justify-center p-2">
+						<svg
+							className="w-4 h-4 text-primary-500 mr-1.5"
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24">
+							<path
+								stroke="currentColor"
+								strokeLinecap="round"
+								strokeLinejoin="round"
+								strokeWidth="2"
+								d="M12 21a9 9 0 100-18 9 9 0 000 18zm0 0a8.949 8.949 0 004.951-1.488A3.987 3.987 0 0013 16h-2a3.987 3.987 0 00-3.951 3.512A8.948 8.948 0 0012 21zm3-11a3 3 0 11-6 0 3 3 0 016 0z"
+							/>
+						</svg>
+						<span className="text-xs sm:text-sm">Following</span>
+					</div>
+				</Link>
+
+				<Link
+					to={`/profile/${id}/followers`}
+					className={`profile-tab rounded-tr-lg ${
+						pathname === `/profile/${id}/followers` && '!bg-dark-3'
+					}`}>
+					<div className="flex items-center justify-center p-2">
+						<svg
+							className="w-4 h-4 text-primary-500 mr-1.5"
+							aria-hidden="true"
+							xmlns="http://www.w3.org/2000/svg"
+							fill="none"
+							viewBox="0 0 24 24">
+							<path
+								stroke="currentColor"
+								strokeLinecap="round"
+								strokeWidth="2"
+								d="M4.5 17H4a1 1 0 01-1-1 3 3 0 013-3h1m0-3.05A2.5 2.5 0 119 5.5M19.5 17h.5a1 1 0 001-1 3 3 0 00-3-3h-1m0-3.05a2.5 2.5 0 10-2-4.45m.5 13.5h-7a1 1 0 01-1-1 3 3 0 013-3h3a3 3 0 013 3 1 1 0 01-1 1zm-1-9.5a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z"
+							/>
+						</svg>
+						<span className="text-xs sm:text-sm">Followers</span>
+					</div>
+				</Link>
 			</div>
 
 			<Routes>
