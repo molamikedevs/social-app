@@ -89,6 +89,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
 								<Textarea
 									className="shad-textarea custom-scrollbar"
 									{...field}
+									placeholder="Write a caption to make your post more engaging..."
 								/>
 							</FormControl>
 							<FormMessage className="shad-form_message" />
@@ -124,7 +125,7 @@ const PostForm = ({ post, action }: PostFormProps) => {
 								<Input
 									type="text"
 									className="shad-input"
-									placeholder="Art, Expression, Learn, Tech"
+									placeholder="Enter location"
 									{...field}
 								/>
 							</FormControl>
@@ -142,7 +143,12 @@ const PostForm = ({ post, action }: PostFormProps) => {
 								Add Tags(separated by comma " ,")
 							</FormLabel>
 							<FormControl>
-								<Input type="text" className="shad-input" {...field} />
+								<Input
+									type="text"
+									className="shad-input"
+									{...field}
+									placeholder="Art, Expression, Learn, Tech, Sport, Travel and more..."
+								/>
 							</FormControl>
 							<FormMessage className="shad-form_message" />
 						</FormItem>
@@ -155,8 +161,9 @@ const PostForm = ({ post, action }: PostFormProps) => {
 					</Button>
 					<Button
 						type="submit"
-						className="shad-button_primary whitespace-nowrap" disabled={isCreatingPost || isUpdatingPost}>
-							{isCreatingPost || isUpdatingPost && <Loader />}
+						className="shad-button_primary whitespace-nowrap"
+						disabled={isCreatingPost || isUpdatingPost}>
+						{isCreatingPost || (isUpdatingPost && <Loader />)}
 						{action} post
 					</Button>
 				</div>
