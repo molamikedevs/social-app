@@ -34,6 +34,8 @@ import {
 	getNotifications,
 	notifyUser,
 	markAsRead,
+	clearAllNotifications,
+	markAllNotificationsAsRead,
 } from '../appwrite/api'
 
 //userCreateUserAccountMutation
@@ -364,11 +366,36 @@ export const useCreateNotification = () => {
 	})
 }
 
+// =============================== USE MARK AS READ
 export const useMarkAsRead = () => {
 	const queryClient = useQueryClient()
 	return useMutation({
 		mutationFn: markAsRead,
 		onSuccess: () => {
+			queryClient.invalidateQueries(['notifications'])
+		},
+	})
+}
+
+// ============================== USE MARK ALL AS READ
+export const useMarkAllAsRead = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: markAllNotificationsAsRead,
+		onSuccess: () => {
+			// Invalidate notifications query to refetch
+			queryClient.invalidateQueries(['notifications'])
+		},
+	})
+}
+
+// ============================== USE CLEAR ALL NOTIFICATIONS
+export const useClearAllNotifications = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: clearAllNotifications,
+		onSuccess: () => {
+			// Invalidate notifications query to refetch
 			queryClient.invalidateQueries(['notifications'])
 		},
 	})

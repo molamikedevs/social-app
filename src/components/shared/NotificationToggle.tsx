@@ -61,9 +61,6 @@ const NotificationToggle = ({
 							? 'left-0 mt-2 w-80'
 							: 'right-0 bottom-full mb-2 w-72'
 					)}>
-					<div className="p-4 border-b border-dark-4">
-						<h3 className="text-light-1 font-semibold">Notifications</h3>
-					</div>
 					<Notifications
 						notifications={notifications?.documents || []}
 						onClose={() => setIsOpen(false)}

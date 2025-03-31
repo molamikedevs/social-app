@@ -26,10 +26,7 @@ export enum QUERY_KEYS {
 	GET_FOLLOWING_LIST = 'getFollowersList',
 
 	// NOTIFICATION KEYS
-	GET_NOTIFICATIONS = 'getNotifications',
-	GET_UNREAD_NOTIFICATIONS = 'getUnreadNotifications',
-	GET_NOTIFICATION_BY_ID = 'getNotificationById',
-	GET_USER_NOTIFICATIONS = 'getUserNotifications',
+	GET_NOTIFICATIONS = 'notifications',
 
 	// COMMENT KEYS
 	GET_POST_COMMENTS = 'getPostComments',

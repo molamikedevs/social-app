@@ -857,3 +857,65 @@ export const markAsRead = async (notificationId: string) => {
 		throw error
 	}
 }
+
+// ============================== MARK ALL AS READ
+export const markAllNotificationsAsRead = async (userId: string) => {
+	try {
+		// First get all unread notifications
+		const unreadNotifications = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.notificationCollectionId,
+			[
+				Query.equal('userId', userId),
+				Query.equal('isRead', false),
+				Query.orderDesc('$createdAt'),
+			]
+		)
+
+		// Update all unread notifications
+		const updatePromises = unreadNotifications.documents.map(notification =>
+			databases.updateDocument(
+				appwriteConfig.databaseId,
+				appwriteConfig.notificationCollectionId,
+				notification.$id,
+				{ isRead: true }
+			)
+		)
+
+		await Promise.all(updatePromises)
+
+		// Return the updated count
+		return { success: true, count: unreadNotifications.documents.length }
+	} catch (error) {
+		console.error('Mark All as Read Error:', error)
+		throw error
+	}
+}
+
+// ============================== CLEAR ALL NOTIFICATIONS
+export const clearAllNotifications = async (userId: string) => {
+	try {
+		// Get all user notifications
+		const allNotifications = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.notificationCollectionId,
+			[Query.equal('userId', userId), Query.orderDesc('$createdAt')]
+		)
+
+		// Delete all notifications
+		const deletePromises = allNotifications.documents.map(notification =>
+			databases.deleteDocument(
+				appwriteConfig.databaseId,
+				appwriteConfig.notificationCollectionId,
+				notification.$id
+			)
+		)
+
+		await Promise.all(deletePromises)
+
+		return { success: true, count: allNotifications.documents.length }
+	} catch (error) {
+		console.error('Clear All Notifications Error:', error)
+		throw error
+	}
+}

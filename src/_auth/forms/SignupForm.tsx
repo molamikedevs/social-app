@@ -1,7 +1,9 @@
 import { z } from 'zod'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import {
 	Form,
 	FormControl,
@@ -13,7 +15,6 @@ import {
 import { Button } from '../../components/ui/button'
 import { toast } from 'sonner'
 import { Input } from '../../components/ui/input'
-import Loader from '../../components/shared/Loader'
 import {
 	useCreateUserAccount,
 	useSignInAccount,
@@ -22,6 +23,7 @@ import { useUserContext } from '../../context/AuthContext'
 import { signupValidation } from '../../lib/validation'
 
 const SignupForm = () => {
+	const [isSubmitting, setIsSubmitting] = useState(false)
 	const navigate = useNavigate()
 	const { checkAuthUser } = useUserContext()
 	const { mutateAsync: signInAccount } = useSignInAccount()
@@ -29,37 +31,42 @@ const SignupForm = () => {
 		useCreateUserAccount()
 
 	const form = useForm<z.infer<typeof signupValidation>>({
-		resolver: zodResolver(signupValidation), // Apply Zod validation schema
+		resolver: zodResolver(signupValidation),
 		defaultValues: {
-			name: '', // Default empty value for the name field
-			username: '', // Default empty value for the username field
-			email: '', // Default empty value for the email field
-			password: '', // Default empty value for the password field
+			name: '',
+			username: '',
+			email: '',
+			password: '',
 		},
 	})
 
-	//Submit handler.
 	const onSubmit = async (values: z.infer<typeof signupValidation>) => {
-		const newUser = await createUserAccount(values)
-		if (!newUser) {
-			toast.error('Sign up failed. Please try again.')
-		}
+		setIsSubmitting(true)
+		try {
+			const newUser = await createUserAccount(values)
+			if (!newUser) {
+				toast.error('Sign up failed. Please try again.')
+				return
+			}
 
-		const session = await signInAccount({
-			email: values.email,
-			password: values.password,
-		})
+			const session = await signInAccount({
+				email: values.email,
+				password: values.password,
+			})
 
-		if (!session) {
-			toast.error('Sign in failed. Please try again.')
-		}
+			if (!session) {
+				toast.error('Sign in failed. Please try again.')
+			}
 
-		const isLoggedIn = await checkAuthUser()
-		if (isLoggedIn) {
-			form.reset()
-			navigate('/')
-		} else {
-			toast.error('Sign in failed. Please try again.')
+			const isLoggedIn = await checkAuthUser()
+			if (isLoggedIn) {
+				form.reset()
+				navigate('/')
+			} else {
+				toast.error('Sign in failed. Please try again.')
+			}
+		} finally {
+			setIsSubmitting(false)
 		}
 	}
 
@@ -136,10 +143,13 @@ const SignupForm = () => {
 							</FormItem>
 						)}
 					/>
-					<Button type="submit" className="shad-button_primary">
-						{isCreatingUser ? (
+					<Button
+						type="submit"
+						className="shad-button_primary"
+						disabled={isSubmitting || isCreatingUser}>
+						{isSubmitting || isCreatingUser ? (
 							<div className="flex-center gap-2">
-								<Loader />
+								<Loader2 className="h-4 w-4 animate-spin" />
 							</div>
 						) : (
 							'Sign Up'

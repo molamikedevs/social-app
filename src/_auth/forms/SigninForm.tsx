@@ -1,7 +1,9 @@
 import { z } from 'zod'
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate } from 'react-router-dom'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { Loader2 } from 'lucide-react'
 import {
 	Form,
 	FormControl,
@@ -13,52 +15,54 @@ import {
 import { Button } from '../../components/ui/button'
 import { toast } from 'sonner'
 import { Input } from '../../components/ui/input'
-import Loader from '../../components/shared/Loader'
 import { useSignInAccount } from '../../lib/react-query/queriesAndMutation'
 import { useUserContext } from '../../context/AuthContext'
 import { signinValidation } from '../../lib/validation'
 
 const SigninForm = () => {
+	const [isSubmitting, setIsSubmitting] = useState(false)
 	const { mutateAsync: signInAccount } = useSignInAccount()
 	const { checkAuthUser, isLoading: isUserLoading } = useUserContext()
-
 	const navigate = useNavigate()
 
 	const form = useForm<z.infer<typeof signinValidation>>({
-		resolver: zodResolver(signinValidation), // Apply Zod validation schema
+		resolver: zodResolver(signinValidation),
 		defaultValues: {
-			email: '', // Default empty value for the email field
-			password: '', // Default empty value for the password field
+			email: '',
+			password: '',
 		},
 	})
 
-	//Submit handler.
 	const onSubmit = async (values: z.infer<typeof signinValidation>) => {
-		const isLoggedIn = await checkAuthUser() // Check if a session is already active
+		setIsSubmitting(true)
+		try {
+			const isLoggedIn = await checkAuthUser()
 
-		if (isLoggedIn) {
-			toast.info('You are already logged in!')
-			navigate('/') // Redirect to home instead of signing in again
-			return
-		}
+			if (isLoggedIn) {
+				toast.info('You are already logged in!')
+				navigate('/')
+				return
+			}
 
-		// If no session exists, proceed with sign-in
-		const session = await signInAccount({
-			email: values.email,
-			password: values.password,
-		})
+			const session = await signInAccount({
+				email: values.email,
+				password: values.password,
+			})
 
-		if (!session) {
-			toast.error('Sign in failed. Please try again.')
-			return
-		}
+			if (!session) {
+				toast.error('Sign in failed. Please try again.')
+				return
+			}
 
-		const updatedIsLoggedIn = await checkAuthUser()
-		if (updatedIsLoggedIn) {
-			form.reset()
-			navigate('/')
-		} else {
-			toast.error('Sign in failed. Please try again.')
+			const updatedIsLoggedIn = await checkAuthUser()
+			if (updatedIsLoggedIn) {
+				form.reset()
+				navigate('/')
+			} else {
+				toast.error('Sign in failed. Please try again.')
+			}
+		} finally {
+			setIsSubmitting(false)
 		}
 	}
 
@@ -107,10 +111,13 @@ const SigninForm = () => {
 							</FormItem>
 						)}
 					/>
-					<Button type="submit" className="shad-button_primary">
-						{isUserLoading ? (
+					<Button
+						type="submit"
+						className="shad-button_primary"
+						disabled={isSubmitting || isUserLoading}>
+						{isSubmitting || isUserLoading ? (
 							<div className="flex-center gap-2">
-								<Loader />
+								<Loader2 className="h-4 w-4 animate-spin" />
 							</div>
 						) : (
 							'Sign In'
