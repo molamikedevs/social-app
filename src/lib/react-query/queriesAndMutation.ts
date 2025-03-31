@@ -31,6 +31,9 @@ import {
 	getFollowersCount,
 	getFollowingList,
 	getFollowersList,
+	getNotifications,
+	notifyUser,
+	markAsRead,
 } from '../appwrite/api'
 
 //userCreateUserAccountMutation
@@ -200,8 +203,8 @@ export const useGetPosts = () => {
 		},
 	})
 }
-// =============================== USE SEARCH POSTS
 
+// =============================== USE SEARCH POSTS
 export const useSearchPosts = (searchTerm: string) => {
 	return useQuery({
 		queryKey: [QUERY_KEYS.SEARCH_POSTS, searchTerm],
@@ -219,6 +222,7 @@ export const useGetUserById = (userId: string) => {
 	})
 }
 
+// =============================== USE GET USERS
 export const useGetUsers = (limit?: number) => {
 	return useQuery({
 		queryKey: [QUERY_KEYS.GET_USERS],
@@ -226,6 +230,7 @@ export const useGetUsers = (limit?: number) => {
 	})
 }
 
+// =============================== USE UPDATE USER
 export const useUpdateUser = () => {
 	const queryClient = useQueryClient()
 	return useMutation({
@@ -241,6 +246,7 @@ export const useUpdateUser = () => {
 	})
 }
 
+// =============================== USE FOLLOW USER
 export const useFollowUser = () => {
 	const queryClient = useQueryClient()
 
@@ -260,6 +266,7 @@ export const useFollowUser = () => {
 	})
 }
 
+// =============================== USE UNFOLLOW USER
 export const useUnfollowUser = () => {
 	const queryClient = useQueryClient()
 
@@ -279,45 +286,90 @@ export const useUnfollowUser = () => {
 	})
 }
 
+// =============================== USE FOLLOW STATUS
 export const useFollowStatus = (followerId?: string, followingId?: string) => {
 	return useQuery({
-		queryKey: ['isFollowing', followingId],
+		queryKey: [QUERY_KEYS.GET_FOLLOW_STATUS, followingId],
 		queryFn: () => isFollowing(followerId!, followingId!),
 		enabled: !!followerId && !!followingId,
 	})
 }
 
+// =============================== USE GET FOLLOWERS AND FOLLOWING COUNT
 export const useGetFollowersCount = (userId: string) => {
 	return useQuery({
-		queryKey: ['getFollowersCount', userId],
+		queryKey: [QUERY_KEYS.GET_FOLLOWERS_COUNT, userId],
 		queryFn: () => getFollowersCount(userId),
 		enabled: !!userId,
 	})
 }
 
+// =============================== USE GET FOLLOWING COUNT
 export const useGetFollowingCount = (userId: string) => {
 	return useQuery({
-		queryKey: ['getFollowingCount', userId],
+		queryKey: [QUERY_KEYS.GET_FOLLOWING_COUNT, userId],
 		queryFn: () => getFollowingCount(userId),
 		enabled: !!userId,
 	})
 }
 
-// In your queriesAndMutation.ts
+// =============================== USE GET FOLLOWERS AND FOLLOWING LIST
 export const useGetFollowersList = (userId?: string) => {
 	return useQuery({
-		queryKey: ['followersList', userId],
+		queryKey: [QUERY_KEYS.GET_FOLLOWERS_LIST, userId],
 		queryFn: () => getFollowersList(userId!),
 		enabled: !!userId,
 		staleTime: 5 * 60 * 1000, // 5 minutes
 	})
 }
 
+// =============================== USE GET FOLLOWING LIST
 export const useGetFollowingList = (userId?: string) => {
 	return useQuery({
-		queryKey: ['followingList', userId],
+		queryKey: [QUERY_KEYS.GET_FOLLOWING_LIST, userId],
 		queryFn: () => getFollowingList(userId!),
 		enabled: !!userId,
 		staleTime: 5 * 60 * 1000, // 5 minutes
+	})
+}
+
+// =============================== USE GET NOTIFICATIONS
+export const useGetNotifications = (userId?: string) => {
+	return useQuery({
+		queryKey: [QUERY_KEYS.GET_NOTIFICATIONS, userId],
+		queryFn: () => getNotifications(userId!),
+		enabled: !!userId,
+		staleTime: 5 * 60 * 1000, // 5 minutes
+	})
+}
+
+// =============================== USE CREATE NOTIFICATION
+export const useCreateNotification = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: ({
+			userId,
+			senderId,
+			type,
+			postId,
+		}: {
+			userId: string
+			senderId: string
+			type: 'follow' | 'like'
+			postId?: string
+		}) => notifyUser(userId, senderId, type, postId),
+		onSuccess: () => {
+			queryClient.invalidateQueries(['notifications'])
+		},
+	})
+}
+
+export const useMarkAsRead = () => {
+	const queryClient = useQueryClient()
+	return useMutation({
+		mutationFn: markAsRead,
+		onSuccess: () => {
+			queryClient.invalidateQueries(['notifications'])
+		},
 	})
 }

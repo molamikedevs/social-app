@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import {
+	useCreateNotification,
 	useDeleteSavedPost,
 	useGetCurrentUser,
 	useLikePost,
@@ -15,6 +16,7 @@ type PostStatsProps = {
 }
 
 const PostStats = ({ post, userId }: PostStatsProps) => {
+	const { mutateAsync: createNotification } = useCreateNotification()
 	const location = useLocation()
 	const likesList = post.likes?.map((user: Models.Document) => user.$id) || []
 
@@ -39,21 +41,43 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 		}
 	}, [currentUser])
 
-	const handleLikePost = (
+	const handleLikePost = async (
 		e: React.MouseEvent<HTMLImageElement, MouseEvent>
 	) => {
 		e.stopPropagation()
 
 		let likesArray = [...likes]
+		const hasLiked = likesArray.includes(userId)
 
-		if (likesArray.includes(userId)) {
+		if (hasLiked) {
 			likesArray = likesArray.filter(Id => Id !== userId)
 		} else {
 			likesArray.push(userId)
 		}
 
 		setLikes(likesArray)
-		likePost({ postId: post.$id || '', likesArray })
+
+		try {
+			await likePost({ postId: post.$id || '', likesArray })
+
+			// Send notification if this is a new like
+			if (!hasLiked) {
+				await createNotification({
+					userId: post.creator.$id, // Notify post author
+					senderId: userId, // Current user
+					type: 'like',
+					postId: post.$id,
+				})
+			}
+		} catch (error) {
+			console.error('Error handling like:', error)
+			// Revert UI if API call fails
+			setLikes(
+				hasLiked
+					? [...likesArray, userId]
+					: likesArray.filter(Id => Id !== userId)
+			)
+		}
 	}
 
 	const handleSavePost = (

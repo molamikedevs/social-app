@@ -4,6 +4,7 @@ import { Button } from '../ui/button'
 import { useSignOutAccount } from '../../lib/react-query/queriesAndMutation'
 import { useUserContext } from '../../context/AuthContext'
 import { sidebarLinks } from '../../constants'
+import NotificationToggle from './NotificationToggle'
 
 const LeftSidebar = () => {
 	const { user } = useUserContext()
@@ -14,6 +15,7 @@ const LeftSidebar = () => {
 	useEffect(() => {
 		if (isSuccess) navigate(0)
 	}, [isSuccess])
+
 	return (
 		<nav className="leftSide-bar">
 			<div className="flex flex-col gap-11">
@@ -24,39 +26,46 @@ const LeftSidebar = () => {
 					</h3>
 				</Link>
 
-				<Link to={`/profile/${user?.id}`} className="flex-center gap-3">
-					<img
-						src={user.imageUrl || '/assets/images/avatar.svg'}
-						alt="user profile"
-						className="h-10 w-10 rounded-full"
-					/>
-					<div className="flex flex-col">
-						<p className="body-bold">{user.name}</p>
-						<p className="small-regular text-light-3">@${user.email}</p>
+				<div className="flex flex-col gap-6">
+					{/* Notification Toggle at the top */}
+					<div className="flex items-center justify-between">
+						<Link to={`/profile/${user?.id}`} className="flex-center gap-3">
+							<img
+								src={user.imageUrl || '/assets/images/avatar.svg'}
+								alt="user profile"
+								className="h-10 w-10 rounded-full"
+							/>
+							<div className="flex flex-col">
+								<p className="body-bold">{user.name}</p>
+								<p className="small-regular text-light-3">@{user.username}</p>
+							</div>
+						</Link>
+						<NotificationToggle position="desktop" />
 					</div>
-				</Link>
 
-				<ul className="flex flex-col gap-6">
-					{sidebarLinks.map(navItem => {
-						const isActive = pathname === navItem.route
-						return (
-							<li
-								key={navItem.label}
-								className={`leftSide-bar-link group ${isActive && 'bg-primary-500'}`}>
-								<NavLink
-									className="flex gap-4 items-center p-4"
-									to={navItem.route}>
-									<img
-										src={navItem.imgURL}
-										alt={navItem.label}
-										className={`group-hover:invert-white ${isActive && 'invert-white'}`}
-									/>
-									{navItem.label}
-								</NavLink>
-							</li>
-						)
-					})}
-				</ul>
+					{/* Navigation Links */}
+					<ul className="flex flex-col gap-6">
+						{sidebarLinks.map(navItem => {
+							const isActive = pathname === navItem.route
+							return (
+								<li
+									key={navItem.label}
+									className={`leftSide-bar-link group ${isActive && 'bg-primary-500'}`}>
+									<NavLink
+										className="flex gap-4 items-center p-4"
+										to={navItem.route}>
+										<img
+											src={navItem.imgURL}
+											alt={navItem.label}
+											className={`group-hover:invert-white ${isActive && 'invert-white'}`}
+										/>
+										{navItem.label}
+									</NavLink>
+								</li>
+							)
+						})}
+					</ul>
+				</div>
 			</div>
 			<Button
 				variant="ghost"

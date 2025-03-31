@@ -1,111 +1,106 @@
-// // components/Notifications.tsx
-// import { Models } from 'appwrite';
-// import { Link } from 'react-router-dom';
-// import Loader from './Loader';
-// import { useQueryClient } from '@tanstack/react-query';
+import { Models } from 'appwrite'
+import { Link } from 'react-router-dom'
+import { useMarkAsRead } from '../../lib/react-query/queriesAndMutation'
+import { timeAgo } from '../../lib/utils'
+import clsx from 'clsx'
 
-// type NotificationProps = {
-//   userId: string;
-//   notifications: Models.DocumentList<Models.Document> | undefined;
-//   isLoading: boolean;
-// };
+interface NotificationsProps {
+	notifications: Models.Document[]
+	isLoading?: boolean
+	onClose?: () => void
+	position?: 'desktop' | 'mobile'
+}
 
-// const Notifications = ({ userId, notifications, isLoading }: NotificationProps) => {
-//   const queryClient = useQueryClient();
-//   const { mutate: markAsRead } = useMarkNotificationAsRead();
+const Notifications = ({
+	notifications,
+	isLoading,
+	onClose,
+	position = 'desktop',
+}: NotificationsProps) => {
+	const { mutate: markAsRead } = useMarkAsRead()
 
-//   const handleNotificationClick = (notification: Models.Document) => {
-//     if (!notification.isRead) {
-//       markAsRead(notification.$id, {
-//         onSuccess: () => {
-//           queryClient.invalidateQueries(['notifications', userId]);
-//         }
-//       });
-//     }
-//   };
+	const getImageUrl = (notification: Models.Document) => {
+		if (notification.type === 'like') {
+			return notification.post?.imageUrl || '/assets/icons/post-placeholder.svg'
+		}
+		return (
+			notification.sender?.imageUrl || '/assets/icons/profile-placeholder.svg'
+		)
+	}
 
-//   if (isLoading) return <Loader />;
+	const handleClick = (notification: Models.Document) => {
+		if (!notification.isRead) markAsRead(notification.$id)
+		onClose?.()
+	}
 
-//   const unreadCount = notifications?.documents?.filter(n => !n.isRead).length || 0;
+	if (isLoading)
+		return (
+			<div className="p-4 text-center text-light-3">
+				Loading notifications...
+			</div>
+		)
 
-//   return (
-//     <div className="notification-dropdown p-4 bg-dark-2 rounded-lg shadow-lg w-80">
-//       <div className="flex justify-between items-center mb-4">
-//         <h3 className="h3-bold text-light-1">Notifications</h3>
-//         {unreadCount > 0 && (
-//           <span className="bg-primary-500 text-light-1 text-xs rounded-full px-2 py-1">
-//             {unreadCount}
-//           </span>
-//         )}
-//       </div>
-      
-//       {notifications?.documents?.length === 0 ? (
-//         <p className="text-light-3">No notifications yet</p>
-//       ) : (
-//         <ul className="space-y-2 max-h-80 overflow-y-auto">
-//           {notifications?.documents?.map((notification) => (
-//             <li 
-//               key={notification.$id}
-//               className={`p-3 rounded-lg cursor-pointer transition ${
-//                 notification.isRead ? 'bg-dark-3' : 'bg-dark-4'
-//               }`}
-//               onClick={() => handleNotificationClick(notification)}
-//             >
-//               <Link 
-//                 to={getNotificationLink(notification)} 
-//                 className="flex items-start gap-3"
-//               >
-//                 <img 
-//                   src={notification.sender?.imageUrl || '/assets/icons/profile-placeholder.svg'} 
-//                   alt="sender" 
-//                   className="w-10 h-10 rounded-full object-cover"
-//                 />
-//                 <div className="flex-1">
-//                   <p className="small-medium text-light-1">
-//                     {getNotificationMessage(notification)}
-//                   </p>
-//                   <p className="subtle-semibold text-light-3 text-xs mt-1">
-//                     {new Date(notification.timestamp).toLocaleString([], {
-//                       month: 'short',
-//                       day: 'numeric',
-//                       hour: '2-digit',
-//                       minute: '2-digit'
-//                     })}
-//                   </p>
-//                 </div>
-//                 {!notification.isRead && (
-//                   <span className="w-2 h-2 bg-primary-500 rounded-full"></span>
-//                 )}
-//               </Link>
-//             </li>
-//           ))}
-//         </ul>
-//       )}
-//     </div>
-//   );
-// };
+	if (!notifications.length)
+		return (
+			<div className="p-4 text-center text-light-3">No notifications yet</div>
+		)
 
-// // Helper functions
-// const getNotificationMessage = (notification: Models.Document) => {
-//   switch (notification.type) {
-//     case 'follow':
-//       return `${notification.sender?.name} started following you`;
-//     case 'like':
-//       return `${notification.sender?.name} liked your post`;
-//     default:
-//       return 'New activity on your account';
-//   }
-// };
+	return (
+		<div
+			className={clsx(
+				'space-y-2',
+				position === 'desktop'
+					? 'max-h-[70vh] overflow-y-auto'
+					: 'max-h-[60vh] overflow-y-auto'
+			)}>
+			{notifications.map(notification => (
+				<Link
+					key={notification.$id}
+					to={
+						notification.type === 'like'
+							? `/posts/${notification.postId}`
+							: `/profile/${notification.senderId}`
+					}
+					className={clsx(
+						'flex items-start p-4 transition-colors',
+						!notification.isRead ? 'bg-dark-3' : 'hover:bg-dark-3'
+					)}
+					onClick={() => handleClick(notification)}>
+					<div className="flex-shrink-0 mr-3">
+						<img
+							src={getImageUrl(notification)}
+							alt={notification.type === 'like' ? 'Post' : 'Profile'}
+							className="h-10 w-10 rounded-full object-cover"
+							onError={e => {
+								;(e.target as HTMLImageElement).src =
+									notification.type === 'like'
+										? '/assets/icons/post-placeholder.svg'
+										: '/assets/icons/profile-placeholder.svg'
+							}}
+						/>
+					</div>
+					<div className="flex-1 min-w-0">
+						<p className="text-sm text-light-1 truncate">
+							<span className="font-semibold">
+								{notification.sender?.name || 'User'}
+							</span>{' '}
+							{notification.type === 'like'
+								? 'liked your post'
+								: 'started following you'}
+						</p>
+						{notification.type === 'like' && notification.post?.caption && (
+							<p className="text-xs text-light-3 mt-1 truncate">
+								"{notification.post.caption}"
+							</p>
+						)}
+						<p className="text-xs text-light-3 mt-1">
+							{timeAgo(notification.$createdAt)}
+						</p>
+					</div>
+				</Link>
+			))}
+		</div>
+	)
+}
 
-// const getNotificationLink = (notification: Models.Document) => {
-//   switch (notification.type) {
-//     case 'follow':
-//       return `/profile/${notification.senderId}`;
-//     case 'like':
-//       return notification.postId ? `/posts/${notification.postId}` : '/';
-//     default:
-//       return '/';
-//   }
-// };
-
-// export default Notifications;
+export default Notifications

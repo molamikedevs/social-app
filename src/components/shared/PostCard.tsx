@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '../ui/button'
 import PostStats from './PostStats'
 import {
+	useCreateNotification,
 	useFollowStatus,
 	useFollowUser,
 	useUnfollowUser,
@@ -16,6 +17,7 @@ type PostCardProps = {
 const PostCard = ({ post }: PostCardProps) => {
 	const { user } = useUserContext()
 	const followMutation = useFollowUser()
+	const { mutateAsync: createNotification } = useCreateNotification()
 	const unfollowMutation = useUnfollowUser()
 	const { data: following, isLoading } = useFollowStatus(
 		user?.id,
@@ -24,19 +26,29 @@ const PostCard = ({ post }: PostCardProps) => {
 
 	if (!post?.creator) return null
 
-	const handleFollowToggle = () => {
+	const handleFollowToggle = async () => {
 		if (!user?.id) return
 
-		if (following) {
-			unfollowMutation.mutate({
-				followerId: user.id,
-				followingId: post.creator.$id,
-			})
-		} else {
-			followMutation.mutate({
-				followerId: user.id,
-				followingId: post.creator.$id,
-			})
+		try {
+			if (following) {
+				await unfollowMutation.mutateAsync({
+					followerId: user.id,
+					followingId: post.creator.$id,
+				})
+			} else {
+				await followMutation.mutateAsync({
+					followerId: user.id,
+					followingId: post.creator.$id,
+				})
+				// Send follow notification
+				await createNotification({
+					userId: post.creator.$id, // Notify the user being followed
+					senderId: user.id, // Current user
+					type: 'follow',
+				})
+			}
+		} catch (error) {
+			console.error('Follow toggle error:', error)
 		}
 	}
 
@@ -72,7 +84,7 @@ const PostCard = ({ post }: PostCardProps) => {
 					<Button
 						type="button"
 						size="sm"
-						className={`shad-button_primary px-5 ${isLoading ? 'opacity-50' : ''}`}
+						className={`shad-button_primary px-3 ml-2 sm:px-5 ${isLoading ? 'opacity-50' : ''}`}
 						onClick={handleFollowToggle}
 						disabled={isLoading}>
 						{following ? 'Unfollow' : 'Follow'}

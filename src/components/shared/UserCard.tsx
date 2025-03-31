@@ -3,6 +3,7 @@ import { Models } from 'appwrite'
 import { Link } from 'react-router-dom'
 import { Button } from '../ui/button'
 import {
+	useCreateNotification,
 	useFollowStatus,
 	useFollowUser,
 	useUnfollowUser,
@@ -16,6 +17,7 @@ const UserCard = ({ user }: UserCardProps) => {
 	const { user: currentUser } = useUserContext()
 	const { mutateAsync: followUser } = useFollowUser()
 	const { mutateAsync: unfollowUser } = useUnfollowUser()
+	const { mutateAsync: createNotification } = useCreateNotification()
 	const {
 		data: following,
 		isLoading,
@@ -23,8 +25,8 @@ const UserCard = ({ user }: UserCardProps) => {
 	} = useFollowStatus(currentUser?.id, user.$id)
 
 	const handleFollowToggle = async (e: React.MouseEvent) => {
-		e.preventDefault() // Prevent Link navigation
-		e.stopPropagation() // Stop event bubbling
+		e.preventDefault()
+		e.stopPropagation()
 
 		if (!currentUser?.id) return
 
@@ -39,8 +41,13 @@ const UserCard = ({ user }: UserCardProps) => {
 					followerId: currentUser.id,
 					followingId: user.$id,
 				})
+				// Send follow notification
+				await createNotification({
+					userId: user.$id, // Notify the user being followed
+					senderId: currentUser.id, // Current user
+					type: 'follow',
+				})
 			}
-			// Manually refetch the follow status
 			await refetch()
 		} catch (error) {
 			console.error('Follow toggle error:', error)

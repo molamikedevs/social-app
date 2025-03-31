@@ -452,33 +452,6 @@ export async function getSearchPosts(searchTerm: string) {
 	}
 }
 
-// export async function getSearchPosts(searchTerm: string) {
-//     try {
-//         const [captionResults, tagResults] = await Promise.all([
-//             databases.listDocuments(
-//                 appwriteConfig.databaseId,
-//                 appwriteConfig.postCollectionId,
-//                 [Query.search('caption', searchTerm)]
-//             ),
-//             databases.listDocuments(
-//                 appwriteConfig.databaseId,
-//                 appwriteConfig.postCollectionId,
-//                 [Query.search('tags', searchTerm)]
-//             )
-//         ]);
-
-//         // Merge results and remove duplicates
-//         const uniqueDocuments = [
-//             ...new Map([...captionResults.documents, ...tagResults.documents].map(doc => [doc.$id, doc])).values()
-//         ];
-
-//         return { documents: uniqueDocuments };
-//     } catch (error) {
-//         console.log("Search Error:", error);
-//         return { documents: [] };
-//     }
-// }
-
 // ============================== GET SAVED POSTS
 export async function getSavedPosts(userId: string) {
 	try {
@@ -513,6 +486,7 @@ export async function getUserById(userId: string) {
 	}
 }
 
+// ============================== GET USERS
 export async function getUsers(limit?: number) {
 	const queries: any[] = [Query.orderDesc('$createdAt')]
 
@@ -535,6 +509,7 @@ export async function getUsers(limit?: number) {
 	}
 }
 
+// ============================== REMOVE SAVE POSTS
 export const removeSavedPosts = async (postId: string) => {
 	try {
 		// Fetch all users who saved this post
@@ -635,7 +610,6 @@ export async function updateUser(user: IUpdateUser) {
 }
 
 // ============================== FOLLOW USER
-
 export const followUser = async (followerId: string, followingId: string) => {
 	try {
 		const response = await databases.createDocument(
@@ -655,7 +629,7 @@ export const followUser = async (followerId: string, followingId: string) => {
 	}
 }
 
-// Unfollow a user
+// ============================== UNFOLLOW USER
 export const unfollowUser = async (followerId: string, followingId: string) => {
 	try {
 		const query = [
@@ -681,7 +655,7 @@ export const unfollowUser = async (followerId: string, followingId: string) => {
 	}
 }
 
-// Check if a user is following another user
+// ============================== CHECK IF FOLLOWING
 export const isFollowing = async (followerId: string, followingId: string) => {
 	try {
 		const query = [
@@ -700,25 +674,7 @@ export const isFollowing = async (followerId: string, followingId: string) => {
 	}
 }
 
-// ============================== NOTIFY USER
-export const notifyUser = async (
-	userId: string,
-	senderId: string,
-	type: string,
-	postId?: string
-) => {
-	try {
-		await databases.createDocument(
-			'databaseId',
-			'notificationsCollectionId',
-			ID.unique(),
-			{ userId, senderId, type, postId: postId || '' }
-		)
-	} catch (error) {
-		console.error('Notification Error:', error)
-	}
-}
-
+// ============================== GET FOLLOWERS COUNT
 export async function getFollowersCount(userId: string) {
 	try {
 		// Query all documents where the user is being followed (followingId = userId)
@@ -738,6 +694,7 @@ export async function getFollowersCount(userId: string) {
 	}
 }
 
+// ============================== GET FOLLOWING COUNT
 export async function getFollowingCount(userId: string) {
 	try {
 		// Query all documents where the user is following others (followerId = userId)
@@ -757,6 +714,7 @@ export async function getFollowingCount(userId: string) {
 	}
 }
 
+// ============================== GET FOLLOWERS LIST
 export const getFollowersList = async (userId: string) => {
 	try {
 		const response = await databases.listDocuments(
@@ -784,6 +742,7 @@ export const getFollowersList = async (userId: string) => {
 	}
 }
 
+// ============================== GET FOLLOWING LIST
 export const getFollowingList = async (userId: string) => {
 	try {
 		const response = await databases.listDocuments(
@@ -807,6 +766,94 @@ export const getFollowingList = async (userId: string) => {
 		return followingUsers
 	} catch (error) {
 		console.error('Error getting following list:', error)
+		throw error
+	}
+}
+
+// ============================== NOTIFY USER
+export const notifyUser = async (
+	userId: string,
+	senderId: string,
+	type: 'follow' | 'like',
+	postId?: string
+) => {
+	try {
+		return await databases.createDocument(
+			appwriteConfig.databaseId,
+			appwriteConfig.notificationCollectionId,
+			ID.unique(),
+			{
+				userId,
+				senderId,
+				type,
+				postId: type === 'like' ? postId : undefined,
+				isRead: false,
+			}
+		)
+	} catch (error) {
+		console.error('Notification Error:', error)
+		throw error
+	}
+}
+
+// ============================== GET NOTIFICATIONS
+export const getNotifications = async (userId: string) => {
+	try {
+		const notifications = await databases.listDocuments(
+			appwriteConfig.databaseId,
+			appwriteConfig.notificationCollectionId,
+			[Query.equal('userId', userId), Query.orderDesc('$createdAt')]
+		)
+
+		const enrichedNotifications = await Promise.all(
+			notifications.documents.map(async notification => {
+				if (notification.type === 'like' && notification.postId) {
+					try {
+						const post = await databases.getDocument(
+							appwriteConfig.databaseId,
+							appwriteConfig.postCollectionId,
+							notification.postId
+						)
+						return { ...notification, post }
+					} catch (error) {
+						console.error('Error fetching post:', error)
+						return notification
+					}
+				} else if (notification.senderId) {
+					try {
+						const sender = await databases.getDocument(
+							appwriteConfig.databaseId,
+							appwriteConfig.userCollectionId,
+							notification.senderId
+						)
+						return { ...notification, sender }
+					} catch (error) {
+						console.error('Error fetching sender:', error)
+						return notification
+					}
+				}
+				return notification
+			})
+		)
+
+		return { ...notifications, documents: enrichedNotifications }
+	} catch (error) {
+		console.error('Fetch Notifications Error:', error)
+		throw error
+	}
+}
+
+// ============================== MARK AS READ
+export const markAsRead = async (notificationId: string) => {
+	try {
+		return await databases.updateDocument(
+			appwriteConfig.databaseId,
+			appwriteConfig.notificationCollectionId,
+			notificationId,
+			{ isRead: true }
+		)
+	} catch (error) {
+		console.error('Mark as Read Error:', error)
 		throw error
 	}
 }

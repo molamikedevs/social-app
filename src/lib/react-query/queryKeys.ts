@@ -17,4 +17,26 @@ export enum QUERY_KEYS {
 
 	//  SEARCH KEYS
 	SEARCH_POSTS = 'getSearchPosts',
+
+	// FOLLOW AND UNFOLLOW
+	GET_FOLLOW_STATUS = 'isFollowing',
+	GET_FOLLOWERS_COUNT = 'getFollowersCount',
+	GET_FOLLOWING_COUNT = 'getFollowingCount',
+	GET_FOLLOWERS_LIST = 'getFollowingList',
+	GET_FOLLOWING_LIST = 'getFollowersList',
+
+	// NOTIFICATION KEYS
+	GET_NOTIFICATIONS = 'getNotifications',
+	GET_UNREAD_NOTIFICATIONS = 'getUnreadNotifications',
+	GET_NOTIFICATION_BY_ID = 'getNotificationById',
+	GET_USER_NOTIFICATIONS = 'getUserNotifications',
+
+	// COMMENT KEYS
+	GET_POST_COMMENTS = 'getPostComments',
+	GET_USER_COMMENTS = 'getUserComments',
+	GET_COMMENT_BY_ID = 'getCommentById',
+
+	// MESSAGE KEYS
+	GET_MESSAGE_THREADS = 'getMessageThreads',
+	GET_MESSAGE_THREAD_BY_ID = 'getMessageThreadById',
 }
