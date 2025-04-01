@@ -9,6 +9,7 @@ import {
 import { Models } from 'appwrite'
 import { checkIsLiked } from '../../lib/utils'
 import { useLocation } from 'react-router-dom'
+import { MessageSquare, Share2, Heart, Bookmark } from 'lucide-react'
 
 type PostStatsProps = {
 	post: Models.Document
@@ -22,6 +23,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 
 	const [likes, setLikes] = useState<string[]>(likesList)
 	const [isSaved, setIsSaved] = useState(false)
+	const [showShareOptions, setShowShareOptions] = useState(false) // For share dropdown
 
 	const { mutate: likePost } = useLikePost()
 	const { mutate: savePost } = useSavePost()
@@ -29,7 +31,6 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 
 	const { data: currentUser, isLoading } = useGetCurrentUser()
 
-	// Prevent accessing properties if currentUser is null or undefined
 	const savedPostRecord =
 		currentUser?.save?.find(
 			(record: Models.Document) => record?.post?.$id === post.$id
@@ -42,10 +43,9 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 	}, [currentUser])
 
 	const handleLikePost = async (
-		e: React.MouseEvent<HTMLImageElement, MouseEvent>
+		e: React.MouseEvent<SVGSVGElement, MouseEvent>
 	) => {
 		e.stopPropagation()
-
 		let likesArray = [...likes]
 		const hasLiked = likesArray.includes(userId)
 
@@ -56,22 +56,18 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 		}
 
 		setLikes(likesArray)
-
 		try {
 			await likePost({ postId: post.$id || '', likesArray })
-
-			// Send notification if this is a new like
 			if (!hasLiked) {
 				await createNotification({
-					userId: post.creator.$id, // Notify post author
-					senderId: userId, // Current user
+					userId: post.creator.$id,
+					senderId: userId,
 					type: 'like',
 					postId: post.$id,
 				})
 			}
 		} catch (error) {
 			console.error('Error handling like:', error)
-			// Revert UI if API call fails
 			setLikes(
 				hasLiked
 					? [...likesArray, userId]
@@ -80,16 +76,12 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 		}
 	}
 
-	const handleSavePost = (
-		e: React.MouseEvent<HTMLImageElement, MouseEvent>
-	) => {
+	const handleSavePost = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
 		e.stopPropagation()
-
 		if (savedPostRecord) {
 			setIsSaved(false)
 			return deleteSavePost(savedPostRecord.$id)
 		}
-
 		savePost({ userId: userId, postId: post.$id || '' })
 		setIsSaved(true)
 	}
@@ -98,35 +90,67 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 		? 'w-full'
 		: ''
 
-	if (isLoading) return null // Prevent errors while data is loading
+	if (isLoading) return null
 
 	return (
 		<div
 			className={`flex justify-between items-center z-20 ${containerStyles}`}>
-			<div className="flex gap-2 mr-5">
-				<img
-					src={`${
-						checkIsLiked(likes, userId)
-							? '/assets/icons/liked.svg'
-							: '/assets/icons/like.svg'
-					}`}
-					alt="like"
-					width={20}
-					height={20}
-					onClick={handleLikePost}
-					className="cursor-pointer"
-				/>
-				<p className="small-medium lg:base-medium">{likes.length}</p>
+			<div className="flex gap-4">
+				{/* Like Button */}
+				<div className="flex gap-2 items-center">
+					<Heart
+						className={`w-5 h-5 cursor-pointer ${
+							checkIsLiked(likes, userId)
+								? 'text-rose-500 fill-rose-500'
+								: 'text-primary-500 hover:text-primary-600'
+						}`}
+						onClick={e => {
+							e.stopPropagation()
+							handleLikePost(e) // No type assertion needed
+						}}
+					/>
+					<p className="small-medium lg:base-medium">{likes.length}</p>
+				</div>
+
+				{/* Comment Button */}
+				<div className="flex gap-2 items-center">
+					<MessageSquare
+						className="w-5 h-5 cursor-pointer text-gray-600 hover:text-primary-500"
+						onClick={e => {
+							e.stopPropagation()
+							// Comment logic will go here later
+						}}
+					/>
+					<p className="small-medium lg:base-medium">
+						{post.comments?.length || 0}
+					</p>
+				</div>
+
+				{/* Share Button */}
+				<div className="relative flex gap-2 items-center">
+					<Share2
+						className="w-5 h-5 cursor-pointer text-gray-600 hover:text-primary-500"
+						onClick={e => {
+							e.stopPropagation()
+							setShowShareOptions(!showShareOptions)
+						}}
+					/>
+					{/* Share dropdown remains unchanged */}
+				</div>
 			</div>
 
+			{/* Save Button */}
 			<div className="flex gap-2">
-				<img
-					src={isSaved ? '/assets/icons/saved.svg' : '/assets/icons/save.svg'}
-					alt="save"
-					width={20}
-					height={20}
-					className="cursor-pointer"
-					onClick={handleSavePost}
+				<Bookmark
+					className={`w-5 h-5 cursor-pointer ${
+						isSaved
+							? 'text-primary-500 fill-primary-500'
+							: 'text-primary-500 hover:text-primary-600'
+					}`}
+					onClick={e => {
+						e.stopPropagation()
+						handleSavePost(e)
+					}}
 				/>
 			</div>
 		</div>

@@ -11,6 +11,7 @@ import { timeAgo } from '../../lib/utils'
 import clsx from 'clsx'
 import ConfirmModal from './ConfirmModal'
 
+
 interface NotificationsProps {
 	notifications: Models.Document[]
 	isLoading?: boolean

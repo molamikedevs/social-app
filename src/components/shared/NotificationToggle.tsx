@@ -4,6 +4,7 @@ import { useGetNotifications } from '../../lib/react-query/queriesAndMutation'
 import { Models } from 'appwrite'
 import clsx from 'clsx'
 import Notifications from './Notifications'
+import { useOutsideClick } from '../../hooks/useOutsideClick'
 
 type NotificationToggleProps = {
 	position?: 'desktop' | 'mobile'
@@ -20,8 +21,10 @@ const NotificationToggle = ({
 		notifications?.documents?.filter((n: Models.Document) => !n.isRead)
 			.length || 0
 
+	const { ref } = useOutsideClick(() => setIsOpen(false))
+
 	return (
-		<div className="relative">
+		<div className="relative" ref={ref as React.RefObject<HTMLDivElement>}>
 			<button
 				onClick={() => setIsOpen(!isOpen)}
 				className={clsx(
