@@ -59,7 +59,7 @@ const NotificationToggle = ({
 			{isOpen && (
 				<div
 					className={clsx(
-						'absolute bg-dark-2 rounded-lg shadow-lg border border-dark-4 z-50',
+						'absolute bg-dark-2 rounded-lg shadow-lg z-50',
 						position === 'desktop'
 							? 'left-0 mt-2 w-80'
 							: 'right-0 bottom-full mb-2 w-72'

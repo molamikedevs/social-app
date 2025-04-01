@@ -1,6 +1,6 @@
 import { useUserContext } from '../../context/AuthContext'
 import { Models } from 'appwrite'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Button } from '../ui/button'
 import PostStats from './PostStats'
 import {
@@ -9,13 +9,16 @@ import {
 	useFollowUser,
 	useUnfollowUser,
 } from '../../lib/react-query/queriesAndMutation'
+import { useState } from 'react'
 
 type PostCardProps = {
 	post: Models.Document
 }
 
 const PostCard = ({ post }: PostCardProps) => {
+	const [showShareMenu, setShowShareMenu] = useState(false)
 	const { user } = useUserContext()
+	const navigate = useNavigate()
 	const followMutation = useFollowUser()
 	const { mutateAsync: createNotification } = useCreateNotification()
 	const unfollowMutation = useUnfollowUser()
@@ -23,6 +26,11 @@ const PostCard = ({ post }: PostCardProps) => {
 		user?.id,
 		post.creator?.$id
 	)
+
+	const handleShareClick = (e: React.MouseEvent) => {
+		e.preventDefault()
+		setShowShareMenu(!showShareMenu)
+	}
 
 	if (!post?.creator) return null
 
@@ -40,16 +48,20 @@ const PostCard = ({ post }: PostCardProps) => {
 					followerId: user.id,
 					followingId: post.creator.$id,
 				})
-				// Send follow notification
 				await createNotification({
-					userId: post.creator.$id, // Notify the user being followed
-					senderId: user.id, // Current user
+					userId: post.creator.$id,
+					senderId: user.id,
 					type: 'follow',
 				})
 			}
 		} catch (error) {
 			console.error('Follow toggle error:', error)
 		}
+	}
+
+	const handleCommentClick = (e: React.MouseEvent) => {
+		e.preventDefault()
+		navigate(`/posts/${post.$id}`, { state: { focusComment: true } })
 	}
 
 	return (
@@ -111,7 +123,31 @@ const PostCard = ({ post }: PostCardProps) => {
 				/>
 			</Link>
 
-			<PostStats post={post} userId={user.id} />
+			<div className="post-card relative">
+				{/* ... existing content */}
+				<PostStats
+					post={post}
+					userId={user.id}
+					onCommentClick={handleCommentClick}
+					onShareClick={handleShareClick}
+					commentCount={post.comments?.length || ''}
+				/>
+
+				{showShareMenu && (
+					<div className="absolute right-29 top-16 bg-dark-3 rounded-md shadow-lg z-10 p-2">
+						<button
+							className="block w-full text-left px-4 py-2 hover:bg-dark-4 rounded"
+							onClick={() => {
+								navigator.clipboard.writeText(
+									`${window.location.origin}/posts/${post.$id}`
+								)
+								setShowShareMenu(false)
+							}}>
+							Copy Link
+						</button>
+					</div>
+				)}
+			</div>
 		</div>
 	)
 }

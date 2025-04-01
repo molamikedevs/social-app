@@ -29,9 +29,7 @@ export enum QUERY_KEYS {
 	GET_NOTIFICATIONS = 'notifications',
 
 	// COMMENT KEYS
-	GET_POST_COMMENTS = 'getPostComments',
-	GET_USER_COMMENTS = 'getUserComments',
-	GET_COMMENT_BY_ID = 'getCommentById',
+	GET_USER_COMMENTS = 'comments',
 
 	// MESSAGE KEYS
 	GET_MESSAGE_THREADS = 'getMessageThreads',

@@ -1,4 +1,8 @@
-import React, { useState, useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
+import { Models } from 'appwrite'
+import { checkIsLiked } from '../../lib/utils'
+import { useLocation } from 'react-router-dom'
+import { MessageSquare, Share2, Heart, Bookmark } from 'lucide-react'
 import {
 	useCreateNotification,
 	useDeleteSavedPost,
@@ -6,58 +10,55 @@ import {
 	useLikePost,
 	useSavePost,
 } from '../../lib/react-query/queriesAndMutation'
-import { Models } from 'appwrite'
-import { checkIsLiked } from '../../lib/utils'
-import { useLocation } from 'react-router-dom'
-import { MessageSquare, Share2, Heart, Bookmark } from 'lucide-react'
 
 type PostStatsProps = {
 	post: Models.Document
 	userId: string
+	onCommentClick?: (e: React.MouseEvent) => void
+	onShareClick?: (e: React.MouseEvent) => void
+	commentCount?: number
 }
 
-const PostStats = ({ post, userId }: PostStatsProps) => {
+const PostStats = ({
+	post,
+	userId,
+	onCommentClick,
+	onShareClick,
+	commentCount,
+}: PostStatsProps) => {
 	const { mutateAsync: createNotification } = useCreateNotification()
 	const location = useLocation()
 	const likesList = post.likes?.map((user: Models.Document) => user.$id) || []
 
 	const [likes, setLikes] = useState<string[]>(likesList)
 	const [isSaved, setIsSaved] = useState(false)
-	const [showShareOptions, setShowShareOptions] = useState(false) // For share dropdown
 
 	const { mutate: likePost } = useLikePost()
 	const { mutate: savePost } = useSavePost()
 	const { mutate: deleteSavePost } = useDeleteSavedPost()
 
-	const { data: currentUser, isLoading } = useGetCurrentUser()
+	const { data: currentUser } = useGetCurrentUser()
 
-	const savedPostRecord =
-		currentUser?.save?.find(
-			(record: Models.Document) => record?.post?.$id === post.$id
-		) || null
+	const savedPostRecord = currentUser?.save?.find(
+		(record: Models.Document) => record?.post?.$id === post.$id
+	)
 
 	useEffect(() => {
-		if (currentUser) {
-			setIsSaved(!!savedPostRecord)
-		}
+		setIsSaved(!!savedPostRecord)
 	}, [currentUser])
 
-	const handleLikePost = async (
-		e: React.MouseEvent<SVGSVGElement, MouseEvent>
-	) => {
+	const handleLikePost = async (e: React.MouseEvent) => {
 		e.stopPropagation()
 		let likesArray = [...likes]
 		const hasLiked = likesArray.includes(userId)
 
-		if (hasLiked) {
-			likesArray = likesArray.filter(Id => Id !== userId)
-		} else {
-			likesArray.push(userId)
-		}
+		likesArray = hasLiked
+			? likesArray.filter(id => id !== userId)
+			: [...likesArray, userId]
 
 		setLikes(likesArray)
 		try {
-			await likePost({ postId: post.$id || '', likesArray })
+			await likePost({ postId: post.$id, likesArray })
 			if (!hasLiked) {
 				await createNotification({
 					userId: post.creator.$id,
@@ -68,29 +69,24 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 			}
 		} catch (error) {
 			console.error('Error handling like:', error)
-			setLikes(
-				hasLiked
-					? [...likesArray, userId]
-					: likesArray.filter(Id => Id !== userId)
-			)
+			setLikes(likes)
 		}
 	}
 
-	const handleSavePost = (e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
+	const handleSavePost = (e: React.MouseEvent) => {
 		e.stopPropagation()
 		if (savedPostRecord) {
 			setIsSaved(false)
-			return deleteSavePost(savedPostRecord.$id)
+			deleteSavePost(savedPostRecord.$id)
+		} else {
+			savePost({ userId, postId: post.$id })
+			setIsSaved(true)
 		}
-		savePost({ userId: userId, postId: post.$id || '' })
-		setIsSaved(true)
 	}
 
 	const containerStyles = location.pathname.startsWith('/profile')
 		? 'w-full'
 		: ''
-
-	if (isLoading) return null
 
 	return (
 		<div
@@ -104,38 +100,34 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 								? 'text-rose-500 fill-rose-500'
 								: 'text-primary-500 hover:text-primary-600'
 						}`}
-						onClick={e => {
-							e.stopPropagation()
-							handleLikePost(e) // No type assertion needed
-						}}
+						onClick={handleLikePost}
 					/>
-					<p className="small-medium lg:base-medium">{likes.length}</p>
+					<p className="small-medium lg:base-medium">{likes.length || ''}</p>
 				</div>
 
 				{/* Comment Button */}
 				<div className="flex gap-2 items-center">
 					<MessageSquare
-						className="w-5 h-5 cursor-pointer text-gray-600 hover:text-primary-500"
+						className="w-5 h-5 cursor-pointer text-primary-500 hover:text-primary-600"
 						onClick={e => {
 							e.stopPropagation()
-							// Comment logic will go here later
+							onCommentClick?.(e)
 						}}
 					/>
 					<p className="small-medium lg:base-medium">
-						{post.comments?.length || 0}
+						{commentCount ?? post.comments?.length ?? 0}
 					</p>
 				</div>
 
 				{/* Share Button */}
-				<div className="relative flex gap-2 items-center">
+				<div className="flex gap-2 items-center">
 					<Share2
-						className="w-5 h-5 cursor-pointer text-gray-600 hover:text-primary-500"
+						className="w-5 h-5 cursor-pointer text-primary-500 hover:text-primary-600"
 						onClick={e => {
 							e.stopPropagation()
-							setShowShareOptions(!showShareOptions)
+							onShareClick?.(e)
 						}}
 					/>
-					{/* Share dropdown remains unchanged */}
 				</div>
 			</div>
 
@@ -147,10 +139,7 @@ const PostStats = ({ post, userId }: PostStatsProps) => {
 							? 'text-primary-500 fill-primary-500'
 							: 'text-primary-500 hover:text-primary-600'
 					}`}
-					onClick={e => {
-						e.stopPropagation()
-						handleSavePost(e)
-					}}
+					onClick={handleSavePost}
 				/>
 			</div>
 		</div>

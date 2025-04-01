@@ -15,6 +15,8 @@ export const appwriteConfig = {
 	followsCollectionId: import.meta.env.VITE_APPWRITE_FOLLOWS_COLLECTION_ID, // Collection ID for follows
 	notificationCollectionId: import.meta.env
 		.VITE_APPWRITE_NOTIFICATIONS_COLLECTION_ID, // Collection ID for notifications
+	sharesCollectionId: import.meta.env.VITE_APPWRITE_SHARES_COLLECTION_ID, // Collection ID for shares
+	commentsCollectionId: import.meta.env.VITE_APPWRITE_COMMENTS_COLLECTION_ID, // Collection ID for comments
 }
 
 /**

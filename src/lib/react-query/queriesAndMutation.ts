@@ -36,6 +36,11 @@ import {
 	markAsRead,
 	clearAllNotifications,
 	markAllNotificationsAsRead,
+	createComment,
+	deleteComment,
+	updateComment,
+	getPostComments,
+	sharePost,
 } from '../appwrite/api'
 
 //userCreateUserAccountMutation
@@ -397,6 +402,59 @@ export const useClearAllNotifications = () => {
 		onSuccess: () => {
 			// Invalidate notifications query to refetch
 			queryClient.invalidateQueries(['notifications'])
+		},
+	})
+}
+
+// ====================== COMMENTS ======================
+export const useCreateComment = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: createComment,
+		onSuccess: (_, { postId }) => {
+			queryClient.invalidateQueries(['comments', postId])
+		},
+	})
+}
+
+export const useUpdateComment = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: updateComment,
+		onSuccess: _ => {
+			queryClient.invalidateQueries(['comments'])
+		},
+	})
+}
+
+export const useDeleteComment = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: deleteComment,
+		onSuccess: () => {
+			queryClient.invalidateQueries(['comments'])
+		},
+	})
+}
+
+export const useGetComments = (postId: string) => {
+	return useQuery({
+		queryKey: [QUERY_KEYS.GET_USER_COMMENTS, postId],
+		queryFn: () => getPostComments(postId).then(res => res.documents),
+	})
+}
+
+// ====================== SHARES ======================
+export const useSharePost = () => {
+	const queryClient = useQueryClient()
+
+	return useMutation({
+		mutationFn: sharePost,
+		onSuccess: (_, { postId }) => {
+			queryClient.invalidateQueries(['shares', postId])
 		},
 	})
 }

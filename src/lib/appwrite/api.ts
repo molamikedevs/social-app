@@ -919,3 +919,78 @@ export const clearAllNotifications = async (userId: string) => {
 		throw error
 	}
 }
+
+// ====================== COMMENTS ======================
+export const createComment = async ({
+	postId,
+	userId,
+	content,
+}: {
+	postId: string
+	userId: string
+	content: string
+}) => {
+	return await databases.createDocument(
+		appwriteConfig.databaseId,
+		appwriteConfig.commentsCollectionId,
+		ID.unique(),
+		{ postId, userId, content }
+	)
+}
+
+export const updateComment = async ({
+	commentId,
+	content,
+}: {
+	commentId: string
+	content: string
+}) => {
+	return await databases.updateDocument(
+		appwriteConfig.databaseId,
+		appwriteConfig.commentsCollectionId,
+		commentId,
+		{ content }
+	)
+}
+
+export const deleteComment = async (commentId: string) => {
+	return await databases.deleteDocument(
+		appwriteConfig.databaseId,
+		appwriteConfig.commentsCollectionId,
+		commentId
+	)
+}
+
+export const getPostComments = async (postId: string) => {
+	return await databases.listDocuments(
+		appwriteConfig.databaseId,
+		appwriteConfig.commentsCollectionId,
+		[Query.equal('postId', postId)]
+	)
+}
+
+
+// ====================== SHARES ======================
+export const sharePost = async ({
+	postId,
+	userId,
+	shareType = 'internal',
+	externalLink = '',
+}: {
+	postId: string
+	userId: string
+	shareType?: 'internal' | 'external'
+	externalLink?: string
+}) => {
+	return await databases.createDocument(
+		appwriteConfig.databaseId,
+		appwriteConfig.sharesCollectionId,
+		ID.unique(),
+		{
+			postId,
+			userId,
+			shareType,
+			externalLink: shareType === 'external' ? externalLink : '',
+		}
+	)
+}
