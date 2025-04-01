@@ -10,6 +10,8 @@ import {
 	useUnfollowUser,
 } from '../../lib/react-query/queriesAndMutation'
 import { useState } from 'react'
+import { LazyLoadImage } from 'react-lazy-load-image-component'
+import 'react-lazy-load-image-component/src/effects/blur.css'
 
 type PostCardProps = {
 	post: Models.Document
@@ -17,6 +19,7 @@ type PostCardProps = {
 
 const PostCard = ({ post }: PostCardProps) => {
 	const [showShareMenu, setShowShareMenu] = useState(false)
+	const [showImagePreview, setShowImagePreview] = useState(false)
 	const { user } = useUserContext()
 	const navigate = useNavigate()
 	const followMutation = useFollowUser()
@@ -64,15 +67,27 @@ const PostCard = ({ post }: PostCardProps) => {
 		navigate(`/posts/${post.$id}`, { state: { focusComment: true } })
 	}
 
+	const handleImageClick = (e: React.MouseEvent) => {
+		e.preventDefault()
+		setShowImagePreview(true)
+	}
+
+	const closeImagePreview = () => {
+		setShowImagePreview(false)
+	}
+
 	return (
 		<div className="post-card">
 			<div className="flex-between">
 				<div className="flex items-center gap-3">
 					<Link to={`/profile/${post.creator.$id}`}>
-						<img
+						<LazyLoadImage
 							src={post.creator?.imageUrl || '/assets/icons/avatar.svg'}
 							alt="creator"
 							className="w-12 lg:h-12 rounded-full"
+							effect="blur"
+							width="100%"
+							height="100%"
 						/>
 					</Link>
 
@@ -116,15 +131,20 @@ const PostCard = ({ post }: PostCardProps) => {
 					</ul>
 				</div>
 
-				<img
-					src={post.imageUrl || '/assets/icons/avatar.svg'}
-					alt="post image"
-					className="post-card_img"
-				/>
+				<div className="relative w-full overflow-hidden rounded-lg">
+					<LazyLoadImage
+						src={post.imageUrl || '/assets/icons/avatar.svg'}
+						alt="post image"
+						className="post-card_img object-contain w-full max-h-[500px] rounded-md cursor-pointer"
+						effect="blur"
+						onClick={handleImageClick}
+						width="100%"
+						height="auto"
+					/>
+				</div>
 			</Link>
 
 			<div className="post-card relative">
-				{/* ... existing content */}
 				<PostStats
 					post={post}
 					userId={user.id}
@@ -148,6 +168,27 @@ const PostCard = ({ post }: PostCardProps) => {
 					</div>
 				)}
 			</div>
+
+			{/* Image Preview Modal */}
+			{showImagePreview && (
+				<div
+					className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4"
+					onClick={closeImagePreview}>
+					<div className="relative max-w-full max-h-full">
+						<img
+							src={post.imageUrl}
+							alt="post preview"
+							className="max-w-full max-h-[90vh] object-contain rounded-md"
+							onClick={e => e.stopPropagation()}
+						/>
+						<button
+							className="absolute top-4 right-4 text-white text-2xl bg-dark-4 rounded-full w-10 h-10 flex items-center justify-center"
+							onClick={closeImagePreview}>
+							×
+						</button>
+					</div>
+				</div>
+			)}
 		</div>
 	)
 }

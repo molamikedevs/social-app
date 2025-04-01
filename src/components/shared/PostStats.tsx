@@ -115,7 +115,7 @@ const PostStats = ({
 						}}
 					/>
 					<p className="small-medium lg:base-medium">
-						{commentCount ?? post.comments?.length ?? 0}
+						{commentCount ?? post.comments?.length ?? ''}
 					</p>
 				</div>
 
