@@ -1,4 +1,10 @@
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from '@/types'
+import {
+	CommentWithUser,
+	INewPost,
+	INewUser,
+	IUpdatePost,
+	IUpdateUser,
+} from '@/types'
 import { QUERY_KEYS } from '../../lib/react-query/queryKeys'
 import {
 	useInfiniteQuery,
@@ -39,8 +45,8 @@ import {
 	createComment,
 	deleteComment,
 	updateComment,
-	getPostComments,
 	sharePost,
+	getPostCommentsWithUsers,
 } from '../appwrite/api'
 
 //userCreateUserAccountMutation
@@ -362,7 +368,7 @@ export const useCreateNotification = () => {
 		}: {
 			userId: string
 			senderId: string
-			type: 'follow' | 'like'
+			type: 'follow' | 'like' | 'comment'
 			postId?: string
 		}) => notifyUser(userId, senderId, type, postId),
 		onSuccess: () => {
@@ -406,14 +412,26 @@ export const useClearAllNotifications = () => {
 	})
 }
 
-// ====================== COMMENTS ======================
+// ====================== COMMENTS QUERIES ======================
+export const useGetComments = (postId: string) => {
+	return useQuery<CommentWithUser[]>({
+		queryKey: [QUERY_KEYS.GET_USER_COMMENTS, postId],
+		queryFn: () => getPostCommentsWithUsers(postId),
+		enabled: !!postId,
+	})
+}
+
+// ====================== COMMENTS MUTATIONS ======================
 export const useCreateComment = () => {
 	const queryClient = useQueryClient()
 
 	return useMutation({
 		mutationFn: createComment,
-		onSuccess: (_, { postId }) => {
-			queryClient.invalidateQueries(['comments', postId])
+		onSuccess: (_, variables) => {
+			queryClient.invalidateQueries([
+				QUERY_KEYS.GET_USER_COMMENTS,
+				variables.postId,
+			])
 		},
 	})
 }
@@ -423,8 +441,8 @@ export const useUpdateComment = () => {
 
 	return useMutation({
 		mutationFn: updateComment,
-		onSuccess: _ => {
-			queryClient.invalidateQueries(['comments'])
+		onSuccess: () => {
+			queryClient.invalidateQueries([QUERY_KEYS.GET_USER_COMMENTS])
 		},
 	})
 }
@@ -435,15 +453,8 @@ export const useDeleteComment = () => {
 	return useMutation({
 		mutationFn: deleteComment,
 		onSuccess: () => {
-			queryClient.invalidateQueries(['comments'])
+			queryClient.invalidateQueries([QUERY_KEYS.GET_USER_COMMENTS])
 		},
-	})
-}
-
-export const useGetComments = (postId: string) => {
-	return useQuery({
-		queryKey: [QUERY_KEYS.GET_USER_COMMENTS, postId],
-		queryFn: () => getPostComments(postId).then(res => res.documents),
 	})
 }
 

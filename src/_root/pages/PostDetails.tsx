@@ -27,7 +27,6 @@ const PostDetails = () => {
 	useEffect(() => {
 		if (state?.focusComment) {
 			setShowComments(true)
-			// Remove the state to prevent re-triggering
 			window.history.replaceState({}, document.title)
 		}
 	}, [state])

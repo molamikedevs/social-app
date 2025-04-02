@@ -1,3 +1,5 @@
+import { Models } from 'appwrite'
+
 export type INavLink = {
 	imgURL: string
 	route: string
@@ -64,4 +66,8 @@ export interface CreateNotificationParams {
 	senderId: string
 	type: NotificationType
 	postId?: string
+}
+
+export type CommentWithUser = Models.Document & {
+	user: Models.Document
 }

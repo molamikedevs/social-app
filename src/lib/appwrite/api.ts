@@ -1,6 +1,12 @@
 import { ID, Query } from 'appwrite'
 import { appwriteConfig, account, databases, storage, avatars } from './config'
-import { INewPost, INewUser, IUpdatePost, IUpdateUser } from '../../types'
+import {
+	CommentWithUser,
+	INewPost,
+	INewUser,
+	IUpdatePost,
+	IUpdateUser,
+} from '../../types'
 /**
  * Creates a new user account in Appwrite authentication and saves user details in the database.
  * @param {INewUser} user - Object containing user details (email, password, name, and optional username).
@@ -774,7 +780,7 @@ export const getFollowingList = async (userId: string) => {
 export const notifyUser = async (
 	userId: string,
 	senderId: string,
-	type: 'follow' | 'like',
+	type: 'follow' | 'like' | 'comment',
 	postId?: string
 ) => {
 	try {
@@ -920,7 +926,7 @@ export const clearAllNotifications = async (userId: string) => {
 	}
 }
 
-// ====================== COMMENTS ======================
+// ====================== COMMENTS API ======================
 export const createComment = async ({
 	postId,
 	userId,
@@ -961,14 +967,33 @@ export const deleteComment = async (commentId: string) => {
 	)
 }
 
-export const getPostComments = async (postId: string) => {
-	return await databases.listDocuments(
+export const getPostCommentsWithUsers = async (
+	postId: string
+): Promise<CommentWithUser[]> => {
+	// First get the comments
+	const comments = await databases.listDocuments(
 		appwriteConfig.databaseId,
 		appwriteConfig.commentsCollectionId,
-		[Query.equal('postId', postId)]
+		[Query.equal('postId', postId), Query.orderDesc('$createdAt')]
 	)
-}
 
+	// Then get user data for each comment
+	const commentsWithUsers = await Promise.all(
+		comments.documents.map(async comment => {
+			const user = await databases.getDocument(
+				appwriteConfig.databaseId,
+				appwriteConfig.userCollectionId,
+				comment.userId
+			)
+			return {
+				...comment,
+				user,
+			} as CommentWithUser
+		})
+	)
+
+	return commentsWithUsers
+}
 
 // ====================== SHARES ======================
 export const sharePost = async ({

@@ -59,7 +59,7 @@ const PostStats = ({
 		setLikes(likesArray)
 		try {
 			await likePost({ postId: post.$id, likesArray })
-			if (!hasLiked) {
+			if (!hasLiked && post.creator.$id !== userId) {
 				await createNotification({
 					userId: post.creator.$id,
 					senderId: userId,
