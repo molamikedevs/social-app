@@ -59,7 +59,7 @@ export type INewUser = {
 }
 
 // types.ts (or your types file)
-export type NotificationType = 'follow' | 'like'
+export type NotificationType = 'follow' | 'like' | 'comment'
 
 export interface CreateNotificationParams {
 	userId: string
