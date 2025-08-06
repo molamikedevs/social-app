@@ -2,7 +2,7 @@
 
 ![Movie Trending Application](https://i.imgur.com/MTiHWip.png)  
 
- A social media web application with stunning ui **You can create a post, follow and unfollow, comment, save post, like post and delete post**, with smooth ** Infinity scrolling**. Powered by **Appwrite** for backend operations.  
+**A social media web application with a stunning UI. Users can create posts, follow and unfollow other users, comment on posts, save posts, like posts, and delete posts - all with smooth infinite scrolling. Powered by Appwrite for backend operations.**  
 
 ---
 
