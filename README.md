@@ -1,4 +1,4 @@
-# 🎬 YuSocial 
+# YuSocial 
 
 ![Movie Trending Application](https://i.imgur.com/DNKhZOz.png)  
 
@@ -18,7 +18,7 @@
 ## 🔗 Explore the App  
 
 👀 Want to try the app before installing?  
-🔗 **Live Demo:** [Movie Trending App](https://social-app-henna-theta.vercel.app/)  
+🔗 **Live Demo:** [YuSocial](https://social-app-henna-theta.vercel.app/)  
 
 ---
 
