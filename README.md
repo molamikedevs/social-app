@@ -1,33 +1,49 @@
-# YuSocial 
+# 🌐 YuSocial
 
-![Movie Trending Application](https://i.imgur.com/MTiHWip.png)  
+![Social Media App Banner](https://i.imgur.com/MTiHWip.png)
 
-**A social media web application with a stunning UI. Users can create posts, follow and unfollow other users, comment on posts, save posts, like posts, and delete posts - all with smooth infinite scrolling. Powered by Appwrite for backend operations.**  
+> Modern social platform with seamless content interaction
 
----
+## ✨ Features
 
-## 🛠 Tech Stack  
-- **React** ⚛️ - Frontend framework  
-- **Tailwind CSS** 🎨 - Styling  
-- **Appwrite** 🔧 - Backend services  
-- **Zod** 🎥 - Form Validation
-- **typeScript** Type Saftety  
+- **Social Interactions**
+  - Create/delete posts
+  - Like and comment system
+  - Follow/unfollow users
+  - Save favorite posts
+- **User Experience**
+  - Smooth infinite scrolling
+  - Responsive UI/UX
+  - Real-time updates
+- **Content Management**
+  - Rich post creation
+  - Media uploads
+  - Interactive feeds
 
----
+## 🛠 Tech Stack
 
-## 🔗 Explore the App  
+| Category       | Technologies                         |
+|----------------|--------------------------------------|
+| Frontend       | React, TypeScript, Tailwind CSS      |
+| Backend        | Appwrite (Database, Auth, Storage)  |
+| Validation     | Zod                                  |
+| Deployment     | Vercel                               |
 
-👀 Want to try the app before installing?  
-🔗 **Live Demo:** [YuSocial](https://social-app-henna-theta.vercel.app/)  
+## 🚀 Live Demo
 
----
+Experience the app: [YuSocial Live Demo](https://social-app-henna-theta.vercel.app/)
 
-## 🚀 Getting Started  
+## 📸 App Preview
 
-### **1️⃣ Clone the Repository**  
+<div align="center">
+  <img src="https://i.imgur.com/MYmwXyg.png" width="30%" alt="Feed View">
+  <img src="https://i.imgur.com/BUYma3Z.png" width="30%" alt="Users"> 
+  <img src="https://i.imgur.com/yH8sd16.png" width="30%" alt="User Profile">
+</div>
+
+## 🛠️ Installation
+
+1. Clone the repository
 ```bash
 git clone https://github.com/molamikedevs/social-app.git
 cd social-app
-
-
-
