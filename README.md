@@ -1,6 +1,6 @@
 # YuSocial 
 
-![Movie Trending Application](https://i.imgur.com/DNKhZOz.png)  
+![Movie Trending Application](https://i.imgur.com/MTiHWip.png)  
 
  A social media web application with stunning ui **You can create a post, follow and unfollow, comment, save post, like post and delete post**, with smooth ** Infinity scrolling**. Powered by **Appwrite** for backend operations.  
 
